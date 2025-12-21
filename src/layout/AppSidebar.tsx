@@ -5,6 +5,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useSidebar } from "../context/SidebarContext";
 import {
+  AudioIcon,
   BoxCubeIcon,
   CalenderIcon,
   ChevronDownIcon,
@@ -14,6 +15,7 @@ import {
   PageIcon,
   PieChartIcon,
   PlugInIcon,
+  ShootingStarIcon,
   TableIcon,
   UserCircleIcon,
 } from "../icons/index";
@@ -42,7 +44,13 @@ const navItems: NavItem[] = [
     name: "User Profile",
     path: "/profile",
   },
-
+  {
+    icon: <AudioIcon />,
+    name: "Classical Album",
+    subItems: [
+      { name: "Composers", path: "/composers", pro: false },
+    ],
+  },
   {
     name: "Forms",
     icon: <ListIcon />,
@@ -304,35 +312,20 @@ const AppSidebar: React.FC = () => {
       onMouseLeave={() => setIsHovered(false)}
     >
       <div
-        className={`py-8 flex  ${
+        className={`py-8 flex items-center ${
           !isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
         }`}
       >
-        <Link href="/">
+        <Link href="/" className="flex items-center gap-2">
           {isExpanded || isHovered || isMobileOpen ? (
             <>
-              <Image
-                className="dark:hidden"
-                src="/images/logo/logo.svg"
-                alt="Logo"
-                width={150}
-                height={40}
-              />
-              <Image
-                className="hidden dark:block"
-                src="/images/logo/logo-dark.svg"
-                alt="Logo"
-                width={150}
-                height={40}
-              />
+              <ShootingStarIcon className="w-8 h-8 text-purple-500" />
+              <span className="text-2xl font-bold text-gray-900 dark:text-white">
+                Alpaii
+              </span>
             </>
           ) : (
-            <Image
-              src="/images/logo/logo-icon.svg"
-              alt="Logo"
-              width={32}
-              height={32}
-            />
+            <ShootingStarIcon className="w-8 h-8 text-purple-500" />
           )}
         </Link>
       </div>
@@ -374,7 +367,6 @@ const AppSidebar: React.FC = () => {
             </div>
           </div>
         </nav>
-        {isExpanded || isHovered || isMobileOpen ? <SidebarWidget /> : null}
       </div>
     </aside>
   );
