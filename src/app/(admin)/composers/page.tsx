@@ -75,9 +75,11 @@ export default function ComposersPage() {
 
     try {
       const data = {
-        ...formData,
-        short_name: formData.short_name || null,
-        nationality: formData.nationality || null,
+        name: formData.name.trim(),
+        short_name: formData.short_name?.trim() || null,
+        nationality: formData.nationality?.trim() || null,
+        birth_year: formData.birth_year,
+        death_year: formData.death_year,
       };
 
       if (editingComposer) {
