@@ -5,6 +5,7 @@ interface ComponentCardProps {
   children: React.ReactNode;
   className?: string; // Additional custom classes for styling
   desc?: string; // Description text
+  headerAction?: React.ReactNode; // Optional action button/element in header
 }
 
 const ComponentCard: React.FC<ComponentCardProps> = ({
@@ -12,22 +13,34 @@ const ComponentCard: React.FC<ComponentCardProps> = ({
   children,
   className = "",
   desc = "",
+  headerAction,
 }) => {
   return (
     <div
       className={`rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] ${className}`}
     >
       {/* Card Header */}
-      <div className="px-6 py-5">
-        <h3 className="text-base font-medium text-gray-800 dark:text-white/90">
-          {title}
-        </h3>
-        {desc && (
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            {desc}
-          </p>
-        )}
-      </div>
+      {(title || desc || headerAction) && (
+        <div className="px-6 py-5">
+          <div className="flex items-start justify-between gap-4">
+            {(title || desc) && (
+              <div>
+                {title && (
+                  <h3 className="text-base font-medium text-gray-800 dark:text-white/90">
+                    {title}
+                  </h3>
+                )}
+                {desc && (
+                  <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                    {desc}
+                  </p>
+                )}
+              </div>
+            )}
+            {headerAction && <div className="flex-1">{headerAction}</div>}
+          </div>
+        </div>
+      )}
 
       {/* Card Body */}
       <div className="p-4 border-t border-gray-100 dark:border-gray-800 sm:p-6">

@@ -3,7 +3,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 export interface Composer {
   id: number;
   name: string;
-  short_name: string | null;
+  short_name: string;
   birth_year: number | null;
   death_year: number | null;
   nationality: string | null;
@@ -11,7 +11,7 @@ export interface Composer {
 
 export interface ComposerCreate {
   name: string;
-  short_name?: string | null;
+  short_name: string;
   birth_year?: number | null;
   death_year?: number | null;
   nationality?: string | null;
@@ -59,8 +59,17 @@ class ApiClient {
   }
 
   // Composers API
-  async getComposers(skip = 0, limit = 100): Promise<Composer[]> {
-    return this.request<Composer[]>(`/api/composers/?skip=${skip}&limit=${limit}`);
+  async getComposers(skip = 0, limit = 100, search?: string): Promise<Composer[]> {
+    const params = new URLSearchParams({
+      skip: skip.toString(),
+      limit: limit.toString(),
+    });
+
+    if (search) {
+      params.append('search', search);
+    }
+
+    return this.request<Composer[]>(`/api/composers/?${params.toString()}`);
   }
 
   async getComposer(id: number): Promise<Composer> {
