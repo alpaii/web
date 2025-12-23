@@ -14,15 +14,15 @@ export default function ComposersPage() {
   const [editingComposer, setEditingComposer] = useState<Composer | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [formData, setFormData] = useState<ComposerCreate>({
+    full_name: "",
     name: "",
-    short_name: "",
     birth_year: null,
     death_year: null,
     nationality: "",
   });
 
-  const formatName = (name: string, shortName: string): string => {
-    return `${shortName} (${name})`;
+  const formatName = (fullName: string, name: string): string => {
+    return `${name} (${fullName})`;
   };
 
   const formatLife = (birthYear: number | null, deathYear: number | null): string => {
@@ -63,8 +63,8 @@ export default function ComposersPage() {
     if (composer) {
       setEditingComposer(composer);
       setFormData({
+        full_name: composer.full_name,
         name: composer.name,
-        short_name: composer.short_name,
         birth_year: composer.birth_year,
         death_year: composer.death_year,
         nationality: composer.nationality || "",
@@ -72,8 +72,8 @@ export default function ComposersPage() {
     } else {
       setEditingComposer(null);
       setFormData({
+        full_name: "",
         name: "",
-        short_name: "",
         birth_year: null,
         death_year: null,
         nationality: "",
@@ -86,8 +86,8 @@ export default function ComposersPage() {
     setIsModalOpen(false);
     setEditingComposer(null);
     setFormData({
+      full_name: "",
       name: "",
-      short_name: "",
       birth_year: null,
       death_year: null,
       nationality: "",
@@ -99,8 +99,8 @@ export default function ComposersPage() {
 
     try {
       const data = {
+        full_name: formData.full_name.trim(),
         name: formData.name.trim(),
-        short_name: formData.short_name.trim(),
         nationality: formData.nationality?.trim() || null,
         birth_year: formData.birth_year,
         death_year: formData.death_year,
@@ -236,7 +236,7 @@ export default function ComposersPage() {
                     className="border-b border-gray-200 dark:border-gray-800"
                   >
                     <td className="px-4 py-3 text-gray-800 text-theme-sm dark:text-white/90">
-                      {formatName(composer.name, composer.short_name)}
+                      {formatName(composer.full_name, composer.name)}
                     </td>
                     <td className="px-4 py-3 text-gray-500 text-theme-sm dark:text-gray-400">
                       {formatLife(composer.birth_year, composer.death_year)}
@@ -289,14 +289,14 @@ export default function ComposersPage() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
-                  Name <span className="text-red-500">*</span>
+                  Full Name <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   required
-                  value={formData.name}
+                  value={formData.full_name}
                   onChange={(e) =>
-                    setFormData({ ...formData, name: e.target.value })
+                    setFormData({ ...formData, full_name: e.target.value })
                   }
                   className="w-full rounded-md border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                   placeholder="e.g., Johann Sebastian Bach"
@@ -305,14 +305,14 @@ export default function ComposersPage() {
 
               <div>
                 <label className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
-                  Short Name <span className="text-red-500">*</span>
+                  Name <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   required
-                  value={formData.short_name}
+                  value={formData.name}
                   onChange={(e) =>
-                    setFormData({ ...formData, short_name: e.target.value })
+                    setFormData({ ...formData, name: e.target.value })
                   }
                   className="w-full rounded-md border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                   placeholder="e.g., J.S. Bach"

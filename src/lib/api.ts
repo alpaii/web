@@ -2,24 +2,24 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 export interface Composer {
   id: number;
+  full_name: string;
   name: string;
-  short_name: string;
   birth_year: number | null;
   death_year: number | null;
   nationality: string | null;
 }
 
 export interface ComposerCreate {
+  full_name: string;
   name: string;
-  short_name: string;
   birth_year?: number | null;
   death_year?: number | null;
   nationality?: string | null;
 }
 
 export interface ComposerUpdate {
-  name?: string;
-  short_name?: string | null;
+  full_name?: string;
+  name?: string | null;
   birth_year?: number | null;
   death_year?: number | null;
   nationality?: string | null;
