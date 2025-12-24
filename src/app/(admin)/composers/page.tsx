@@ -1,12 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { apiClient, Composer, ComposerCreate, ComposerUpdate } from "@/lib/api";
 import { PlusIcon, PencilIcon, TrashBinIcon, CloseIcon, SearchIcon } from "@/icons/index";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import ComponentCard from "@/components/common/ComponentCard";
 
 export default function ComposersPage() {
+  const router = useRouter();
   const [composers, setComposers] = useState<Composer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -243,6 +245,9 @@ export default function ComposersPage() {
                 <th className="px-4 py-3 font-bold text-gray-500 text-theme-xs dark:text-gray-400">
                   Name
                 </th>
+                <th className="px-4 py-3 font-bold text-gray-500 text-theme-xs dark:text-gray-400 text-center">
+                  Compositions
+                </th>
                 <th className="px-4 py-3 font-bold text-gray-500 text-theme-xs dark:text-gray-400">
                   Life
                 </th>
@@ -258,7 +263,7 @@ export default function ComposersPage() {
               {composers.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={4}
+                    colSpan={5}
                     className="px-4 py-8 text-center text-gray-500 text-theme-sm dark:text-gray-400"
                   >
                     {searchQuery
@@ -289,6 +294,15 @@ export default function ComposersPage() {
                         </div>
                         <span>{composer.name}</span>
                       </div>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <button
+                        onClick={() => router.push(`/compositions?composer=${composer.id}`)}
+                        className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 underline cursor-pointer transition-colors"
+                        title={`View compositions by ${composer.name}`}
+                      >
+                        {composer.composition_count}
+                      </button>
                     </td>
                     <td className="px-4 py-3 text-gray-500 text-theme-sm dark:text-gray-400">
                       {formatLife(composer.birth_year, composer.death_year)}

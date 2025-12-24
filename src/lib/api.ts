@@ -8,6 +8,7 @@ export interface Composer {
   death_year: number | null;
   nationality: string | null;
   image_url: string | null;
+  composition_count: number;
 }
 
 export interface ComposerCreate {
@@ -26,6 +27,25 @@ export interface ComposerUpdate {
   death_year?: number | null;
   nationality?: string | null;
   image_url?: string | null;
+}
+
+export interface Composition {
+  id: number;
+  composer_id: number;
+  catalog_number: string | null;
+  title: string;
+}
+
+export interface CompositionCreate {
+  composer_id: number;
+  catalog_number?: string | null;
+  title: string;
+}
+
+export interface CompositionUpdate {
+  composer_id?: number;
+  catalog_number?: string | null;
+  title?: string;
 }
 
 class ApiClient {
@@ -114,6 +134,48 @@ class ApiClient {
     }
 
     return response.json();
+  }
+
+  // Compositions API
+  async getCompositions(skip = 0, limit = 100, composerId?: number, search?: string): Promise<Composition[]> {
+    const params = new URLSearchParams({
+      skip: skip.toString(),
+      limit: limit.toString(),
+    });
+
+    if (composerId) {
+      params.append('composer_id', composerId.toString());
+    }
+
+    if (search) {
+      params.append('search', search);
+    }
+
+    return this.request<Composition[]>(`/api/compositions/?${params.toString()}`);
+  }
+
+  async getComposition(id: number): Promise<Composition> {
+    return this.request<Composition>(`/api/compositions/${id}`);
+  }
+
+  async createComposition(data: CompositionCreate): Promise<Composition> {
+    return this.request<Composition>('/api/compositions/', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateComposition(id: number, data: CompositionUpdate): Promise<Composition> {
+    return this.request<Composition>(`/api/compositions/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteComposition(id: number): Promise<void> {
+    return this.request<void>(`/api/compositions/${id}`, {
+      method: 'DELETE',
+    });
   }
 }
 
