@@ -48,6 +48,31 @@ export interface CompositionUpdate {
   title?: string;
 }
 
+export interface Artist {
+  id: number;
+  name: string;
+  birth_year: number | null;
+  death_year: number | null;
+  nationality: string | null;
+  instrument: string | null;
+}
+
+export interface ArtistCreate {
+  name: string;
+  birth_year?: number | null;
+  death_year?: number | null;
+  nationality?: string | null;
+  instrument?: string | null;
+}
+
+export interface ArtistUpdate {
+  name?: string;
+  birth_year?: number | null;
+  death_year?: number | null;
+  nationality?: string | null;
+  instrument?: string | null;
+}
+
 class ApiClient {
   private baseURL: string;
 
@@ -174,6 +199,44 @@ class ApiClient {
 
   async deleteComposition(id: number): Promise<void> {
     return this.request<void>(`/api/compositions/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // Artists API
+  async getArtists(skip = 0, limit = 100, search?: string): Promise<Artist[]> {
+    const params = new URLSearchParams({
+      skip: skip.toString(),
+      limit: limit.toString(),
+    });
+
+    if (search) {
+      params.append('search', search);
+    }
+
+    return this.request<Artist[]>(`/api/artists/?${params.toString()}`);
+  }
+
+  async getArtist(id: number): Promise<Artist> {
+    return this.request<Artist>(`/api/artists/${id}`);
+  }
+
+  async createArtist(data: ArtistCreate): Promise<Artist> {
+    return this.request<Artist>('/api/artists/', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateArtist(id: number, data: ArtistUpdate): Promise<Artist> {
+    return this.request<Artist>(`/api/artists/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteArtist(id: number): Promise<void> {
+    return this.request<void>(`/api/artists/${id}`, {
       method: 'DELETE',
     });
   }
