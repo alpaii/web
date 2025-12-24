@@ -7,6 +7,7 @@ export interface Composer {
   birth_year: number | null;
   death_year: number | null;
   nationality: string | null;
+  image_url: string | null;
 }
 
 export interface ComposerCreate {
@@ -15,6 +16,7 @@ export interface ComposerCreate {
   birth_year?: number | null;
   death_year?: number | null;
   nationality?: string | null;
+  image_url?: string | null;
 }
 
 export interface ComposerUpdate {
@@ -23,6 +25,7 @@ export interface ComposerUpdate {
   birth_year?: number | null;
   death_year?: number | null;
   nationality?: string | null;
+  image_url?: string | null;
 }
 
 class ApiClient {
@@ -94,6 +97,23 @@ class ApiClient {
     return this.request<void>(`/api/composers/${id}`, {
       method: 'DELETE',
     });
+  }
+
+  async uploadImage(file: File): Promise<{ image_url: string }> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await fetch(`${this.baseURL}/api/composers/upload-image`, {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ detail: 'Upload failed' }));
+      throw new Error(error.detail || `HTTP ${response.status}`);
+    }
+
+    return response.json();
   }
 }
 
