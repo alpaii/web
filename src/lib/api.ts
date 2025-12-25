@@ -73,6 +73,56 @@ export interface ArtistUpdate {
   instrument?: string | null;
 }
 
+export interface Recording {
+  id: number;
+  composition_id: number;
+  year: number | null;
+  artists: Artist[];
+}
+
+export interface RecordingCreate {
+  composition_id: number;
+  year?: number | null;
+  artist_ids: number[];
+}
+
+export interface RecordingUpdate {
+  composition_id?: number;
+  year?: number | null;
+  artist_ids?: number[];
+}
+
+export interface AlbumImage {
+  id: number;
+  album_id: number;
+  image_url: string;
+  is_primary: number;
+}
+
+export interface Album {
+  id: number;
+  title: string;
+  album_type: string;
+  recordings: Recording[];
+  images: AlbumImage[];
+}
+
+export interface AlbumCreate {
+  title: string;
+  album_type?: string;
+  recording_ids: number[];
+  image_urls?: string[];
+  primary_image_index?: number | null;
+}
+
+export interface AlbumUpdate {
+  title?: string;
+  album_type?: string;
+  recording_ids?: number[];
+  image_urls?: string[];
+  primary_image_index?: number | null;
+}
+
 class ApiClient {
   private baseURL: string;
 
@@ -239,6 +289,107 @@ class ApiClient {
     return this.request<void>(`/api/artists/${id}`, {
       method: 'DELETE',
     });
+  }
+
+  // Recordings API
+  async getRecordings(skip = 0, limit = 100, compositionId?: number, artistId?: number): Promise<Recording[]> {
+    const params = new URLSearchParams({
+      skip: skip.toString(),
+      limit: limit.toString(),
+    });
+
+    if (compositionId) {
+      params.append('composition_id', compositionId.toString());
+    }
+
+    if (artistId) {
+      params.append('artist_id', artistId.toString());
+    }
+
+    return this.request<Recording[]>(`/api/recordings/?${params.toString()}`);
+  }
+
+  async getRecording(id: number): Promise<Recording> {
+    return this.request<Recording>(`/api/recordings/${id}`);
+  }
+
+  async createRecording(data: RecordingCreate): Promise<Recording> {
+    return this.request<Recording>('/api/recordings/', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateRecording(id: number, data: RecordingUpdate): Promise<Recording> {
+    return this.request<Recording>(`/api/recordings/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteRecording(id: number): Promise<void> {
+    return this.request<void>(`/api/recordings/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // Albums API
+  async getAlbums(skip = 0, limit = 100, albumType?: string, search?: string): Promise<Album[]> {
+    const params = new URLSearchParams({
+      skip: skip.toString(),
+      limit: limit.toString(),
+    });
+
+    if (albumType) {
+      params.append('album_type', albumType);
+    }
+
+    if (search) {
+      params.append('search', search);
+    }
+
+    return this.request<Album[]>(`/api/albums/?${params.toString()}`);
+  }
+
+  async getAlbum(id: number): Promise<Album> {
+    return this.request<Album>(`/api/albums/${id}`);
+  }
+
+  async createAlbum(data: AlbumCreate): Promise<Album> {
+    return this.request<Album>('/api/albums/', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateAlbum(id: number, data: AlbumUpdate): Promise<Album> {
+    return this.request<Album>(`/api/albums/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteAlbum(id: number): Promise<void> {
+    return this.request<void>(`/api/albums/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async uploadAlbumImage(file: File): Promise<{ image_url: string }> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await fetch(`${this.baseURL}/api/albums/upload-image`, {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ detail: 'Upload failed' }));
+      throw new Error(error.detail || `HTTP ${response.status}`);
+    }
+
+    return response.json();
   }
 }
 

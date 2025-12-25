@@ -51,6 +51,8 @@ const navItems: NavItem[] = [
       { name: "Composers", path: "/composers", pro: false },
       { name: "Compositions", path: "/compositions", pro: false },
       { name: "Artists", path: "/artists", pro: false },
+      { name: "Recordings", path: "/recordings", pro: false },
+      { name: "Albums", path: "/albums", pro: false },
     ],
   },
   {
