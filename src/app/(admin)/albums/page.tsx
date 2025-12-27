@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, Fragment } from "react";
+import Image from "next/image";
 import { apiClient, Album, AlbumCreate, Recording, Composer, Composition } from "@/lib/api";
 import { PlusIcon, PencilIcon, TrashBinIcon, CloseIcon, SearchIcon } from "@/icons/index";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
@@ -170,7 +171,7 @@ export default function AlbumsPage() {
       const imageUrls = await Promise.all(uploadPromises);
       setFormData(prev => ({
         ...prev,
-        image_urls: [...prev.image_urls, ...imageUrls]
+        image_urls: [...(prev.image_urls || []), ...imageUrls]
       }));
       setError(null);
     } catch (err) {
@@ -183,10 +184,10 @@ export default function AlbumsPage() {
   const handleRemoveImage = (index: number) => {
     setFormData(prev => ({
       ...prev,
-      image_urls: prev.image_urls.filter((_, i) => i !== index),
+      image_urls: (prev.image_urls || []).filter((_, i) => i !== index),
       primary_image_index: prev.primary_image_index === index
         ? null
-        : (prev.primary_image_index !== null && prev.primary_image_index > index
+        : (prev.primary_image_index !== null && prev.primary_image_index !== undefined && prev.primary_image_index > index
           ? prev.primary_image_index - 1
           : prev.primary_image_index)
     }));
@@ -222,7 +223,10 @@ export default function AlbumsPage() {
         await apiClient.createAlbum(data);
       }
 
-      await loadAlbums(selectedAlbumType);
+      if (selectedCompositionId) {
+        const albumsData = await apiClient.getAlbums(0, 1000);
+        setAlbums(albumsData);
+      }
       handleCloseModal();
     } catch (err) {
       setError(err instanceof Error ? err.message : "앨범 저장에 실패했습니다");
@@ -356,12 +360,14 @@ export default function AlbumsPage() {
                           }`}>
                             {album.album_type}
                           </span>
-                          <div className="w-16 h-16 rounded overflow-hidden bg-gray-200 dark:bg-gray-700 flex-shrink-0">
+                          <div className="relative w-16 h-16 rounded overflow-hidden bg-gray-200 dark:bg-gray-700 flex-shrink-0">
                             {getPrimaryImage(album) ? (
-                              <img
+                              <Image
                                 src={getPrimaryImage(album)!}
                                 alt={album.title}
-                                className="w-full h-full object-cover"
+                                fill
+                                className="object-cover"
+                                sizes="64px"
                               />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center text-gray-400">
@@ -544,19 +550,23 @@ export default function AlbumsPage() {
                   {uploading ? "업로드 중..." : "하나 이상의 이미지를 선택하세요"}
                 </p>
 
-                {formData.image_urls.length > 0 && (
+                {formData.image_urls && formData.image_urls.length > 0 && (
                   <div className="mt-3 grid grid-cols-4 gap-3">
                     {formData.image_urls.map((url, index) => (
                       <div key={index} className="relative group">
-                        <img
-                          src={url}
-                          alt={`Preview ${index + 1}`}
-                          className={`w-full h-24 object-cover rounded ${
-                            formData.primary_image_index === index
-                              ? 'ring-2 ring-brand-500'
-                              : ''
-                          }`}
-                        />
+                        <div className={`relative w-full h-24 rounded ${
+                          formData.primary_image_index === index
+                            ? 'ring-2 ring-brand-500'
+                            : ''
+                        }`}>
+                          <Image
+                            src={url}
+                            alt={`Preview ${index + 1}`}
+                            fill
+                            className="object-cover rounded"
+                            sizes="(max-width: 768px) 25vw, 20vw"
+                          />
+                        </div>
                         <div className="absolute top-1 right-1 flex gap-1">
                           <button
                             type="button"

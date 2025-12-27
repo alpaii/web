@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { apiClient, Composer, ComposerCreate, ComposerUpdate } from "@/lib/api";
 import { PlusIcon, PencilIcon, TrashBinIcon } from "@/icons/index";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
@@ -309,77 +310,79 @@ export default function ComposersPage() {
         submitLabel={editingComposer ? "수정" : "추가"}
         maxWidth="md"
       >
-              <div>
-                <label className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
-                  프로필 이미지
-                </label>
-                <div className="flex items-center gap-4">
-                  <div className="relative w-20 h-20 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-700 flex-shrink-0">
-                    {imagePreview ? (
-                      <img
-                        src={imagePreview}
-                        alt="Preview"
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-400 dark:text-gray-500 text-2xl font-semibold">
-                        {formData.name ? formData.name.charAt(0).toUpperCase() : "?"}
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      disabled={uploading}
-                      className="w-full text-sm text-gray-900 dark:text-white file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-brand-500 file:text-white hover:file:bg-brand-600 file:cursor-pointer disabled:opacity-50"
-                    />
-                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                      {uploading ? "업로드 중..." : "PNG, JPG, WEBP 최대 5MB"}
-                    </p>
-                  </div>
+        <div>
+          <label className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
+            프로필 이미지
+          </label>
+          <div className="flex items-center gap-4">
+            <div className="relative w-20 h-20 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-700 flex-shrink-0">
+              {imagePreview ? (
+                <Image
+                  src={imagePreview}
+                  alt="Preview"
+                  fill
+                  className="object-cover"
+                  sizes="80px"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-gray-400 dark:text-gray-500 text-2xl font-semibold">
+                  {formData.name ? formData.name.charAt(0).toUpperCase() : "?"}
                 </div>
-              </div>
-
-              <FormInput
-                label="전체 이름"
-                type="text"
-                required
-                value={formData.full_name}
-                onChange={(value) => setFormData({ ...formData, full_name: value as string })}
+              )}
+            </div>
+            <div className="flex-1">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                disabled={uploading}
+                className="w-full text-sm text-gray-900 dark:text-white file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-brand-500 file:text-white hover:file:bg-brand-600 file:cursor-pointer disabled:opacity-50"
               />
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                {uploading ? "업로드 중..." : "PNG, JPG, WEBP 최대 5MB"}
+              </p>
+            </div>
+          </div>
+        </div>
 
-              <FormInput
-                label="이름"
-                type="text"
-                required
-                value={formData.name}
-                onChange={(value) => setFormData({ ...formData, name: value as string })}
-              />
+        <FormInput
+          label="전체 이름"
+          type="text"
+          required
+          value={formData.full_name}
+          onChange={(value) => setFormData({ ...formData, full_name: value as string })}
+        />
 
-              <div className="grid grid-cols-2 gap-4">
-                <FormInput
-                  label="출생년도"
-                  type="number"
-                  value={formData.birth_year || ""}
-                  onChange={(value) => setFormData({ ...formData, birth_year: value ? Number(value) : null })}
-                />
+        <FormInput
+          label="이름"
+          type="text"
+          required
+          value={formData.name}
+          onChange={(value) => setFormData({ ...formData, name: value as string })}
+        />
 
-                <FormInput
-                  label="사망년도"
-                  type="number"
-                  value={formData.death_year || ""}
-                  onChange={(value) => setFormData({ ...formData, death_year: value ? Number(value) : null })}
-                />
-              </div>
+        <div className="grid grid-cols-2 gap-4">
+          <FormInput
+            label="출생년도"
+            type="number"
+            value={formData.birth_year || ""}
+            onChange={(value) => setFormData({ ...formData, birth_year: value ? Number(value) : null })}
+          />
 
-              <FormInput
-                label="국적"
-                type="text"
-                value={formData.nationality || ""}
-                onChange={(value) => setFormData({ ...formData, nationality: value as string })}
-              />
+          <FormInput
+            label="사망년도"
+            type="number"
+            value={formData.death_year || ""}
+            onChange={(value) => setFormData({ ...formData, death_year: value ? Number(value) : null })}
+          />
+        </div>
+
+        <FormInput
+          label="국적"
+          type="text"
+          value={formData.nationality || ""}
+          onChange={(value) => setFormData({ ...formData, nationality: value as string })}
+        />
       </FormModal>
     </div>
   );

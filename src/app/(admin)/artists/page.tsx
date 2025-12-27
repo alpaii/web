@@ -2,13 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { apiClient, Artist, ArtistCreate, ArtistUpdate } from "@/lib/api";
-import { PlusIcon, PencilIcon, TrashBinIcon } from "@/icons/index";
+import { PlusIcon, PencilIcon, TrashBinIcon, CloseIcon } from "@/icons/index";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import ComponentCard from "@/components/common/ComponentCard";
 import ErrorAlert from "@/components/common/ErrorAlert";
 import SearchInput from "@/components/common/SearchInput";
-import FormModal from "@/components/common/FormModal";
-import FormInput from "@/components/common/FormInput";
 
 export default function ArtistsPage() {
   const [artists, setArtists] = useState<Artist[]>([]);

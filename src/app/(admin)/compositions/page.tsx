@@ -9,8 +9,6 @@ import ComponentCard from "@/components/common/ComponentCard";
 import ErrorAlert from "@/components/common/ErrorAlert";
 import SearchInput from "@/components/common/SearchInput";
 import ComposerSelect from "@/components/common/ComposerSelect";
-import FormModal from "@/components/common/FormModal";
-import FormInput from "@/components/common/FormInput";
 
 export default function CompositionsPage() {
   const searchParams = useSearchParams();
