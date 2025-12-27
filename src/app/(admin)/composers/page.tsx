@@ -6,6 +6,7 @@ import { apiClient, Composer, ComposerCreate, ComposerUpdate } from "@/lib/api";
 import { PlusIcon, PencilIcon, TrashBinIcon, CloseIcon, SearchIcon } from "@/icons/index";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import ComponentCard from "@/components/common/ComponentCard";
+import ComposerProfile from "@/components/common/ComposerProfile";
 
 export default function ComposersPage() {
   const router = useRouter();
@@ -49,7 +50,7 @@ export default function ComposersPage() {
       setComposers(data);
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load composers");
+      setError(err instanceof Error ? err.message : "작곡가 목록을 불러오는데 실패했습니다");
     } finally {
       if (isInitialLoad) {
         setLoading(false);
@@ -109,13 +110,13 @@ export default function ComposersPage() {
 
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      setError("Image size must be less than 5MB");
+      setError("이미지 크기는 5MB 이하여야 합니다");
       return;
     }
 
     // Validate file type
     if (!file.type.startsWith("image/")) {
-      setError("Please select an image file");
+      setError("이미지 파일을 선택해주세요");
       return;
     }
 
@@ -126,7 +127,7 @@ export default function ComposersPage() {
       setImagePreview(`http://localhost:8000${result.image_url}`);
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to upload image");
+      setError(err instanceof Error ? err.message : "이미지 업로드에 실패했습니다");
     } finally {
       setUploading(false);
     }
@@ -154,12 +155,12 @@ export default function ComposersPage() {
       await loadComposers();
       handleCloseModal();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to save composer");
+      setError(err instanceof Error ? err.message : "작곡가 저장에 실패했습니다");
     }
   };
 
   const handleDelete = async (id: number, name: string) => {
-    if (!confirm(`Are you sure you want to delete "${name}"?`)) {
+    if (!confirm(`"${name}"을(를) 삭제하시겠습니까?`)) {
       return;
     }
 
@@ -167,7 +168,7 @@ export default function ComposersPage() {
       await apiClient.deleteComposer(id);
       await loadComposers();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to delete composer");
+      setError(err instanceof Error ? err.message : "작곡가 삭제에 실패했습니다");
     }
   };
 
@@ -181,7 +182,7 @@ export default function ComposersPage() {
 
   return (
     <div>
-      <PageBreadcrumb pageTitle="Composers" />
+      <PageBreadcrumb pageTitle="작곡가" />
 
       {/* Error Message */}
       {error && (
@@ -216,7 +217,7 @@ export default function ComposersPage() {
               </button>
               <input
                 type="text"
-                placeholder="Search..."
+                placeholder="검색..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => {
@@ -232,7 +233,7 @@ export default function ComposersPage() {
               className="inline-flex items-center justify-center gap-2 rounded-md bg-brand-500 px-3 py-2 text-center text-sm font-medium text-white hover:bg-brand-600 whitespace-nowrap"
             >
               <PlusIcon className="w-4 h-4" />
-              Add Composer
+              작곡가 추가
             </button>
           </div>
         }
@@ -243,19 +244,19 @@ export default function ComposersPage() {
             <thead>
               <tr className="border-b border-gray-200 bg-gray-50 text-left dark:border-gray-800 dark:bg-gray-800">
                 <th className="px-4 py-3 font-bold text-gray-500 text-theme-xs dark:text-gray-400">
-                  Name
+                  이름
                 </th>
                 <th className="px-4 py-3 font-bold text-gray-500 text-theme-xs dark:text-gray-400 text-center">
-                  Compositions
+                  작곡
                 </th>
                 <th className="px-4 py-3 font-bold text-gray-500 text-theme-xs dark:text-gray-400">
-                  Life
+                  생애
                 </th>
                 <th className="px-4 py-3 font-bold text-gray-500 text-theme-xs dark:text-gray-400">
-                  Nationality
+                  국적
                 </th>
                 <th className="px-4 py-3 font-bold text-gray-500 text-theme-xs dark:text-gray-400 w-32">
-                  Actions
+                  작업
                 </th>
               </tr>
             </thead>
@@ -278,33 +279,23 @@ export default function ComposersPage() {
                     className="border-b border-gray-200 dark:border-gray-800"
                   >
                     <td className="px-4 py-3 text-gray-800 text-theme-sm dark:text-white/90">
-                      <div className="flex items-center gap-3">
-                        <div className="relative w-10 h-10 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-700 flex-shrink-0">
-                          {composer.image_url ? (
-                            <img
-                              src={`http://localhost:8000${composer.image_url}`}
-                              alt={composer.name}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-gray-400 dark:text-gray-500 font-semibold">
-                              {composer.name.charAt(0).toUpperCase()}
-                            </div>
-                          )}
-                        </div>
-                        <span>{composer.name}</span>
-                      </div>
+                      <ComposerProfile
+                        name={composer.name}
+                        profileImage={composer.image_url ? `http://localhost:8000${composer.image_url}` : null}
+                        size="md"
+                      />
                     </td>
                     <td className="px-4 py-3 text-center">
                       <button
                         onClick={() => router.push(`/compositions?composer=${composer.id}`)}
                         className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 underline cursor-pointer transition-colors"
                         title={`View compositions by ${composer.name}`}
+                        style={{ fontFamily: 'monospace' }}
                       >
                         {composer.composition_count}
                       </button>
                     </td>
-                    <td className="px-4 py-3 text-gray-500 text-theme-sm dark:text-gray-400">
+                    <td className="px-4 py-3 text-gray-500 text-theme-sm dark:text-gray-400" style={{ fontFamily: 'monospace' }}>
                       {formatLife(composer.birth_year, composer.death_year)}
                     </td>
                     <td className="px-4 py-3 text-gray-500 text-theme-sm dark:text-gray-400">
@@ -340,9 +331,9 @@ export default function ComposersPage() {
       {isModalOpen && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50">
           <div className="relative w-full max-w-md rounded-lg bg-white p-6 shadow-lg dark:bg-gray-900">
-            <div className="mb-4 flex items-center justify-between">
+            <div className="mb-4 flex items-center justify-between pb-4 border-b border-gray-200 dark:border-gray-700">
               <h3 className="text-xl font-bold text-gray-900 dark:text-white">
-                {editingComposer ? "Edit Composer" : "Add Composer"}
+                {editingComposer ? "작곡가 수정" : "작곡가 추가"}
               </h3>
               <button
                 onClick={handleCloseModal}
@@ -352,10 +343,10 @@ export default function ComposersPage() {
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4 pt-2">
               <div>
                 <label className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
-                  Profile Image
+                  프로필 이미지
                 </label>
                 <div className="flex items-center gap-4">
                   <div className="relative w-20 h-20 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-700 flex-shrink-0">
@@ -380,7 +371,7 @@ export default function ComposersPage() {
                       className="w-full text-sm text-gray-900 dark:text-white file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-brand-500 file:text-white hover:file:bg-brand-600 file:cursor-pointer disabled:opacity-50"
                     />
                     <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                      {uploading ? "Uploading..." : "PNG, JPG, WEBP up to 5MB"}
+                      {uploading ? "업로드 중..." : "PNG, JPG, WEBP 최대 5MB"}
                     </p>
                   </div>
                 </div>
@@ -388,7 +379,7 @@ export default function ComposersPage() {
 
               <div>
                 <label className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
-                  Full Name <span className="text-red-500">*</span>
+                  전체 이름 <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -398,13 +389,12 @@ export default function ComposersPage() {
                     setFormData({ ...formData, full_name: e.target.value })
                   }
                   className="w-full rounded-md border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                  placeholder="e.g., Johann Sebastian Bach"
                 />
               </div>
 
               <div>
                 <label className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
-                  Name <span className="text-red-500">*</span>
+                  이름 <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -414,14 +404,13 @@ export default function ComposersPage() {
                     setFormData({ ...formData, name: e.target.value })
                   }
                   className="w-full rounded-md border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                  placeholder="e.g., J.S. Bach"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
-                    Birth Year
+                    출생년도
                   </label>
                   <input
                     type="number"
@@ -433,13 +422,12 @@ export default function ComposersPage() {
                       })
                     }
                     className="w-full rounded-md border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                    placeholder="1685"
                   />
                 </div>
 
                 <div>
                   <label className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
-                    Death Year
+                    사망년도
                   </label>
                   <input
                     type="number"
@@ -451,14 +439,13 @@ export default function ComposersPage() {
                       })
                     }
                     className="w-full rounded-md border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                    placeholder="1750"
                   />
                 </div>
               </div>
 
               <div>
                 <label className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
-                  Nationality
+                  국적
                 </label>
                 <input
                   type="text"
@@ -467,7 +454,6 @@ export default function ComposersPage() {
                     setFormData({ ...formData, nationality: e.target.value })
                   }
                   className="w-full rounded-md border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                  placeholder="e.g., German"
                 />
               </div>
 
@@ -478,13 +464,13 @@ export default function ComposersPage() {
                   onClick={handleCloseModal}
                   className="rounded-md border border-gray-300 bg-white px-4 py-2 text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
                 >
-                  Cancel
+                  취소
                 </button>
                 <button
                   type="submit"
                   className="rounded-md bg-brand-500 px-4 py-2 text-white hover:bg-brand-600"
                 >
-                  {editingComposer ? "Update" : "Create"}
+                  {editingComposer ? "수정" : "추가"}
                 </button>
               </div>
             </form>

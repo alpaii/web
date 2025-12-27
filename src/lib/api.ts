@@ -33,7 +33,9 @@ export interface Composition {
   id: number;
   composer_id: number;
   catalog_number: string | null;
+  sort_order: number | null;
   title: string;
+  recording_count: number;
 }
 
 export interface CompositionCreate {
@@ -55,6 +57,7 @@ export interface Artist {
   death_year: number | null;
   nationality: string | null;
   instrument: string | null;
+  recording_count: number;
 }
 
 export interface ArtistCreate {
@@ -292,7 +295,7 @@ class ApiClient {
   }
 
   // Recordings API
-  async getRecordings(skip = 0, limit = 100, compositionId?: number, artistId?: number): Promise<Recording[]> {
+  async getRecordings(skip = 0, limit = 100, compositionId?: number, composerId?: number, artistId?: number): Promise<Recording[]> {
     const params = new URLSearchParams({
       skip: skip.toString(),
       limit: limit.toString(),
@@ -300,6 +303,10 @@ class ApiClient {
 
     if (compositionId) {
       params.append('composition_id', compositionId.toString());
+    }
+
+    if (composerId) {
+      params.append('composer_id', composerId.toString());
     }
 
     if (artistId) {

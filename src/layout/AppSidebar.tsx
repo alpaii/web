@@ -46,13 +46,13 @@ const navItems: NavItem[] = [
   },
   {
     icon: <AudioIcon />,
-    name: "Classical Album",
+    name: "클래식 앨범",
     subItems: [
-      { name: "Composers", path: "/composers", pro: false },
-      { name: "Compositions", path: "/compositions", pro: false },
-      { name: "Artists", path: "/artists", pro: false },
-      { name: "Recordings", path: "/recordings", pro: false },
-      { name: "Albums", path: "/albums", pro: false },
+      { name: "작곡가", path: "/composers", pro: false },
+      { name: "작곡", path: "/compositions", pro: false },
+      { name: "아티스트", path: "/artists", pro: false },
+      { name: "녹음", path: "/recordings", pro: false },
+      { name: "앨범", path: "/albums", pro: false },
     ],
   },
   {

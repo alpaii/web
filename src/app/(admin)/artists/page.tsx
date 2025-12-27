@@ -43,7 +43,7 @@ export default function ArtistsPage() {
       setArtists(data);
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load artists");
+      setError(err instanceof Error ? err.message : "아티스트 목록을 불러오는데 실패했습니다");
     } finally {
       if (isInitialLoad) {
         setLoading(false);
@@ -111,12 +111,12 @@ export default function ArtistsPage() {
       await loadArtists();
       handleCloseModal();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to save artist");
+      setError(err instanceof Error ? err.message : "아티스트 저장에 실패했습니다");
     }
   };
 
   const handleDelete = async (id: number, name: string) => {
-    if (!confirm(`Are you sure you want to delete "${name}"?`)) {
+    if (!confirm(`"${name}"을(를) 삭제하시겠습니까?`)) {
       return;
     }
 
@@ -124,7 +124,7 @@ export default function ArtistsPage() {
       await apiClient.deleteArtist(id);
       await loadArtists();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to delete artist");
+      setError(err instanceof Error ? err.message : "아티스트 삭제에 실패했습니다");
     }
   };
 
@@ -138,7 +138,7 @@ export default function ArtistsPage() {
 
   return (
     <div>
-      <PageBreadcrumb pageTitle="Artists" />
+      <PageBreadcrumb pageTitle="아티스트" />
 
       {/* Error Message */}
       {error && (
@@ -173,7 +173,7 @@ export default function ArtistsPage() {
               </button>
               <input
                 type="text"
-                placeholder="Search..."
+                placeholder="검색..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => {
@@ -189,7 +189,7 @@ export default function ArtistsPage() {
               className="inline-flex items-center justify-center gap-2 rounded-md bg-brand-500 px-3 py-2 text-center text-sm font-medium text-white hover:bg-brand-600 whitespace-nowrap"
             >
               <PlusIcon className="w-4 h-4" />
-              Add Artist
+              아티스트 추가
             </button>
           </div>
         }
@@ -200,19 +200,22 @@ export default function ArtistsPage() {
             <thead>
               <tr className="border-b border-gray-200 bg-gray-50 text-left dark:border-gray-800 dark:bg-gray-800">
                 <th className="px-4 py-3 font-bold text-gray-500 text-theme-xs dark:text-gray-400">
-                  Name
+                  이름
                 </th>
                 <th className="px-4 py-3 font-bold text-gray-500 text-theme-xs dark:text-gray-400">
-                  Life
+                  생애
                 </th>
                 <th className="px-4 py-3 font-bold text-gray-500 text-theme-xs dark:text-gray-400">
-                  Nationality
+                  국적
                 </th>
                 <th className="px-4 py-3 font-bold text-gray-500 text-theme-xs dark:text-gray-400">
-                  Instrument
+                  악기
+                </th>
+                <th className="px-4 py-3 font-bold text-gray-500 text-theme-xs dark:text-gray-400">
+                  녹음
                 </th>
                 <th className="px-4 py-3 font-bold text-gray-500 text-theme-xs dark:text-gray-400 w-32">
-                  Actions
+                  작업
                 </th>
               </tr>
             </thead>
@@ -220,12 +223,12 @@ export default function ArtistsPage() {
               {artists.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={5}
+                    colSpan={6}
                     className="px-4 py-8 text-center text-gray-500 text-theme-sm dark:text-gray-400"
                   >
                     {searchQuery
-                      ? "No artists found matching your search."
-                      : "No artists found. Click \"Add Artist\" to create one."}
+                      ? "검색 결과가 없습니다."
+                      : "아티스트가 없습니다. \"아티스트 추가\" 버튼을 클릭하여 추가하세요."}
                   </td>
                 </tr>
               ) : (
@@ -237,7 +240,7 @@ export default function ArtistsPage() {
                     <td className="px-4 py-3 text-gray-800 text-theme-sm dark:text-white/90">
                       {artist.name}
                     </td>
-                    <td className="px-4 py-3 text-gray-500 text-theme-sm dark:text-gray-400">
+                    <td className="px-4 py-3 text-gray-500 text-theme-sm dark:text-gray-400" style={{ fontFamily: 'monospace' }}>
                       {formatLife(artist.birth_year, artist.death_year)}
                     </td>
                     <td className="px-4 py-3 text-gray-500 text-theme-sm dark:text-gray-400">
@@ -246,19 +249,22 @@ export default function ArtistsPage() {
                     <td className="px-4 py-3 text-gray-500 text-theme-sm dark:text-gray-400">
                       {artist.instrument || "-"}
                     </td>
+                    <td className="px-4 py-3 text-gray-500 text-theme-sm dark:text-gray-400">
+                      {artist.recording_count}
+                    </td>
                     <td className="px-4 py-3 w-32">
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => handleOpenModal(artist)}
                           className="rounded p-2.5 text-brand-500 hover:bg-gray-100 dark:hover:bg-gray-800"
-                          title="Edit"
+                          title="수정"
                         >
                           <PencilIcon className="w-5 h-5" />
                         </button>
                         <button
                           onClick={() => handleDelete(artist.id, artist.name)}
                           className="rounded p-2.5 text-red-500 hover:bg-gray-100 dark:hover:bg-gray-800"
-                          title="Delete"
+                          title="삭제"
                         >
                           <TrashBinIcon className="w-5 h-5" />
                         </button>
@@ -278,7 +284,7 @@ export default function ArtistsPage() {
           <div className="relative w-full max-w-md rounded-lg bg-white p-6 shadow-lg dark:bg-gray-900">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-xl font-bold text-gray-900 dark:text-white">
-                {editingArtist ? "Edit Artist" : "Add Artist"}
+                {editingArtist ? "아티스트 수정" : "아티스트 추가"}
               </h3>
               <button
                 onClick={handleCloseModal}
@@ -291,7 +297,7 @@ export default function ArtistsPage() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
-                  Name <span className="text-red-500">*</span>
+                  이름 <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -301,14 +307,13 @@ export default function ArtistsPage() {
                     setFormData({ ...formData, name: e.target.value })
                   }
                   className="w-full rounded-md border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                  placeholder="e.g., Martha Argerich"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
-                    Birth Year
+                    출생년도
                   </label>
                   <input
                     type="number"
@@ -320,13 +325,12 @@ export default function ArtistsPage() {
                       })
                     }
                     className="w-full rounded-md border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                    placeholder="1941"
                   />
                 </div>
 
                 <div>
                   <label className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
-                    Death Year
+                    사망년도
                   </label>
                   <input
                     type="number"
@@ -338,14 +342,13 @@ export default function ArtistsPage() {
                       })
                     }
                     className="w-full rounded-md border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                    placeholder="(optional)"
                   />
                 </div>
               </div>
 
               <div>
                 <label className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
-                  Nationality
+                  국적
                 </label>
                 <input
                   type="text"
@@ -354,13 +357,12 @@ export default function ArtistsPage() {
                     setFormData({ ...formData, nationality: e.target.value })
                   }
                   className="w-full rounded-md border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                  placeholder="e.g., Argentine"
                 />
               </div>
 
               <div>
                 <label className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
-                  Instrument
+                  악기
                 </label>
                 <input
                   type="text"
@@ -369,7 +371,6 @@ export default function ArtistsPage() {
                     setFormData({ ...formData, instrument: e.target.value })
                   }
                   className="w-full rounded-md border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                  placeholder="e.g., Piano"
                 />
               </div>
 
@@ -379,13 +380,13 @@ export default function ArtistsPage() {
                   onClick={handleCloseModal}
                   className="rounded-md border border-gray-300 bg-white px-4 py-2 text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
                 >
-                  Cancel
+                  취소
                 </button>
                 <button
                   type="submit"
                   className="rounded-md bg-brand-500 px-4 py-2 text-white hover:bg-brand-600"
                 >
-                  {editingArtist ? "Update" : "Create"}
+                  {editingArtist ? "수정" : "추가"}
                 </button>
               </div>
             </form>
