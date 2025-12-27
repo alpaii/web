@@ -3,10 +3,14 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { apiClient, Composer, ComposerCreate, ComposerUpdate } from "@/lib/api";
-import { PlusIcon, PencilIcon, TrashBinIcon, CloseIcon, SearchIcon } from "@/icons/index";
+import { PlusIcon, PencilIcon, TrashBinIcon } from "@/icons/index";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import ComponentCard from "@/components/common/ComponentCard";
 import ComposerProfile from "@/components/common/ComposerProfile";
+import ErrorAlert from "@/components/common/ErrorAlert";
+import SearchInput from "@/components/common/SearchInput";
+import FormModal from "@/components/common/FormModal";
+import FormInput from "@/components/common/FormInput";
 
 export default function ComposersPage() {
   const router = useRouter();
@@ -185,49 +189,18 @@ export default function ComposersPage() {
       <PageBreadcrumb pageTitle="작곡가" />
 
       {/* Error Message */}
-      {error && (
-        <div className="mb-4 rounded-md bg-red-50 p-4 text-red-800 dark:bg-red-900/20 dark:text-red-400 border border-red-200 dark:border-red-800">
-          <div className="flex items-start justify-between gap-3">
-            <p className="flex-1">
-              <span className="font-semibold">Error:</span> {error}
-            </p>
-            <button
-              onClick={() => setError(null)}
-              className="flex-shrink-0 rounded-md px-2 py-1 bg-red-200 text-red-700 hover:bg-red-300 dark:bg-red-800 dark:text-red-200 dark:hover:bg-red-700 transition-colors font-bold text-lg leading-none"
-              title="Close"
-              aria-label="Close error message"
-            >
-              ×
-            </button>
-          </div>
-        </div>
-      )}
+      <ErrorAlert message={error} onClose={() => setError(null)} />
 
       <ComponentCard
         title=""
         headerAction={
           <div className="flex items-center justify-between w-full">
-            <div className="relative w-80">
-              <button
-                onClick={handleSearch}
-                className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-brand-500 transition-colors"
-                title="Search"
-              >
-                <SearchIcon className="w-5 h-5" />
-              </button>
-              <input
-                type="text"
-                placeholder="검색..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    handleSearch();
-                  }
-                }}
-                className="w-full rounded-full border border-gray-300 bg-white pl-12 pr-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400"
-              />
-            </div>
+            <SearchInput
+              value={searchQuery}
+              onChange={setSearchQuery}
+              onSearch={handleSearch}
+              placeholder="검색..."
+            />
             <button
               onClick={() => handleOpenModal()}
               className="inline-flex items-center justify-center gap-2 rounded-md bg-brand-500 px-3 py-2 text-center text-sm font-medium text-white hover:bg-brand-600 whitespace-nowrap"
@@ -328,22 +301,14 @@ export default function ComposersPage() {
       </ComponentCard>
 
       {/* Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50">
-          <div className="relative w-full max-w-md rounded-lg bg-white p-6 shadow-lg dark:bg-gray-900">
-            <div className="mb-4 flex items-center justify-between pb-4 border-b border-gray-200 dark:border-gray-700">
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white">
-                {editingComposer ? "작곡가 수정" : "작곡가 추가"}
-              </h3>
-              <button
-                onClick={handleCloseModal}
-                className="rounded p-1 hover:bg-gray-100 dark:hover:bg-gray-800"
-              >
-                <CloseIcon className="w-5 h-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleSubmit} className="space-y-4 pt-2">
+      <FormModal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        title={editingComposer ? "작곡가 수정" : "작곡가 추가"}
+        onSubmit={handleSubmit}
+        submitLabel={editingComposer ? "수정" : "추가"}
+        maxWidth="md"
+      >
               <div>
                 <label className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
                   프로필 이미지
@@ -377,106 +342,45 @@ export default function ComposersPage() {
                 </div>
               </div>
 
-              <div>
-                <label className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
-                  전체 이름 <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.full_name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, full_name: e.target.value })
-                  }
-                  className="w-full rounded-md border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                />
-              </div>
+              <FormInput
+                label="전체 이름"
+                type="text"
+                required
+                value={formData.full_name}
+                onChange={(value) => setFormData({ ...formData, full_name: value as string })}
+              />
 
-              <div>
-                <label className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
-                  이름 <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, name: e.target.value })
-                  }
-                  className="w-full rounded-md border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                />
-              </div>
+              <FormInput
+                label="이름"
+                type="text"
+                required
+                value={formData.name}
+                onChange={(value) => setFormData({ ...formData, name: value as string })}
+              />
 
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
-                    출생년도
-                  </label>
-                  <input
-                    type="number"
-                    value={formData.birth_year || ""}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        birth_year: e.target.value ? parseInt(e.target.value) : null,
-                      })
-                    }
-                    className="w-full rounded-md border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                  />
-                </div>
+                <FormInput
+                  label="출생년도"
+                  type="number"
+                  value={formData.birth_year || ""}
+                  onChange={(value) => setFormData({ ...formData, birth_year: value ? Number(value) : null })}
+                />
 
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
-                    사망년도
-                  </label>
-                  <input
-                    type="number"
-                    value={formData.death_year || ""}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        death_year: e.target.value ? parseInt(e.target.value) : null,
-                      })
-                    }
-                    className="w-full rounded-md border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
-                  국적
-                </label>
-                <input
-                  type="text"
-                  value={formData.nationality || ""}
-                  onChange={(e) =>
-                    setFormData({ ...formData, nationality: e.target.value })
-                  }
-                  className="w-full rounded-md border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                <FormInput
+                  label="사망년도"
+                  type="number"
+                  value={formData.death_year || ""}
+                  onChange={(value) => setFormData({ ...formData, death_year: value ? Number(value) : null })}
                 />
               </div>
 
-
-              <div className="flex justify-end gap-3 pt-4">
-                <button
-                  type="button"
-                  onClick={handleCloseModal}
-                  className="rounded-md border border-gray-300 bg-white px-4 py-2 text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
-                >
-                  취소
-                </button>
-                <button
-                  type="submit"
-                  className="rounded-md bg-brand-500 px-4 py-2 text-white hover:bg-brand-600"
-                >
-                  {editingComposer ? "수정" : "추가"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+              <FormInput
+                label="국적"
+                type="text"
+                value={formData.nationality || ""}
+                onChange={(value) => setFormData({ ...formData, nationality: value as string })}
+              />
+      </FormModal>
     </div>
   );
 }

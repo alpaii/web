@@ -3,10 +3,15 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { apiClient, Recording, RecordingCreate, Composition, Artist, Composer } from "@/lib/api";
-import { PlusIcon, PencilIcon, TrashBinIcon, CloseIcon, SearchIcon } from "@/icons/index";
+import { PlusIcon, PencilIcon, TrashBinIcon, CloseIcon } from "@/icons/index";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import ComponentCard from "@/components/common/ComponentCard";
 import CompositionSearch from "@/components/common/CompositionSearch";
+import ErrorAlert from "@/components/common/ErrorAlert";
+import ComposerSelect from "@/components/common/ComposerSelect";
+import ArtistSearch from "@/components/common/ArtistSearch";
+import FormModal from "@/components/common/FormModal";
+import FormInput from "@/components/common/FormInput";
 
 export default function RecordingsPage() {
   const searchParams = useSearchParams();
@@ -408,23 +413,7 @@ export default function RecordingsPage() {
       <PageBreadcrumb pageTitle="녹음" />
 
       {/* Error Message */}
-      {error && (
-        <div className="mb-4 rounded-md bg-red-50 p-4 text-red-800 dark:bg-red-900/20 dark:text-red-400 border border-red-200 dark:border-red-800">
-          <div className="flex items-start justify-between gap-3">
-            <p className="flex-1">
-              <span className="font-semibold">Error:</span> {error}
-            </p>
-            <button
-              onClick={() => setError(null)}
-              className="flex-shrink-0 rounded-md px-2 py-1 bg-red-200 text-red-700 hover:bg-red-300 dark:bg-red-800 dark:text-red-200 dark:hover:bg-red-700 transition-colors font-bold text-lg leading-none"
-              title="Close"
-              aria-label="Close error message"
-            >
-              ×
-            </button>
-          </div>
-        </div>
-      )}
+      <ErrorAlert message={error} onClose={() => setError(null)} />
 
       <ComponentCard
         title=""

@@ -3,9 +3,14 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { apiClient, Composition, CompositionCreate, Composer } from "@/lib/api";
-import { PlusIcon, PencilIcon, TrashBinIcon, CloseIcon, SearchIcon } from "@/icons/index";
+import { PlusIcon, PencilIcon, TrashBinIcon, CloseIcon } from "@/icons/index";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import ComponentCard from "@/components/common/ComponentCard";
+import ErrorAlert from "@/components/common/ErrorAlert";
+import SearchInput from "@/components/common/SearchInput";
+import ComposerSelect from "@/components/common/ComposerSelect";
+import FormModal from "@/components/common/FormModal";
+import FormInput from "@/components/common/FormInput";
 
 export default function CompositionsPage() {
   const searchParams = useSearchParams();
@@ -166,69 +171,24 @@ export default function CompositionsPage() {
       <PageBreadcrumb pageTitle="작곡" />
 
       {/* Error Message */}
-      {error && (
-        <div className="mb-4 rounded-md bg-red-50 p-4 text-red-800 dark:bg-red-900/20 dark:text-red-400 border border-red-200 dark:border-red-800">
-          <div className="flex items-start justify-between gap-3">
-            <p className="flex-1">
-              <span className="font-semibold">오류:</span> {error}
-            </p>
-            <button
-              onClick={() => setError(null)}
-              className="flex-shrink-0 rounded-md px-2 py-1 bg-red-200 text-red-700 hover:bg-red-300 dark:bg-red-800 dark:text-red-200 dark:hover:bg-red-700 transition-colors font-bold text-lg leading-none"
-              title="닫기"
-              aria-label="오류 메시지 닫기"
-            >
-              ×
-            </button>
-          </div>
-        </div>
-      )}
+      <ErrorAlert message={error} onClose={() => setError(null)} />
 
       <ComponentCard
         title=""
         headerAction={
           <div className="flex items-center justify-between w-full gap-4">
             <div className="flex items-center gap-4">
-              <div className="relative">
-                <select
-                  value={selectedComposerId || ""}
-                  onChange={(e) => handleComposerFilter(e.target.value ? parseInt(e.target.value) : undefined)}
-                  className="min-w-[200px] rounded-md border border-gray-300 bg-white px-4 py-2.5 pr-10 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white appearance-none cursor-pointer"
-                >
-                  <option value="">작곡가 선택</option>
-                  {composers.map((composer) => (
-                    <option key={composer.id} value={composer.id}>
-                      {composer.name}
-                    </option>
-                  ))}
-                </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                  <svg className="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                  </svg>
-                </div>
-              </div>
+              <ComposerSelect
+                composers={composers}
+                value={selectedComposerId}
+                onChange={handleComposerFilter}
+              />
 
-              <div className="relative w-80">
-                <button
-                  onClick={handleSearch}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-brand-500 transition-colors"
-                  title="검색"
-                >
-                  <SearchIcon className="w-5 h-5" />
-                </button>
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      handleSearch();
-                    }
-                  }}
-                  className="w-full rounded-full border border-gray-300 bg-white pl-12 pr-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400"
-                />
-              </div>
+              <SearchInput
+                value={searchQuery}
+                onChange={setSearchQuery}
+                onSearch={handleSearch}
+              />
             </div>
             <button
               onClick={() => handleOpenModal()}
