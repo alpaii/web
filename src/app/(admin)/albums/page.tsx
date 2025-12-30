@@ -2,11 +2,19 @@
 
 import { useState, useEffect, Fragment } from "react";
 import Image from "next/image";
-import { apiClient, Album, AlbumCreate, Recording, Composer, Composition } from "@/lib/api";
+import { apiClient, Album, AlbumCreate, Recording, Composer, Composition, Artist } from "@/lib/api";
 import { PlusIcon, PencilIcon, TrashBinIcon, CloseIcon, SearchIcon } from "@/icons/index";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import ComponentCard from "@/components/common/ComponentCard";
-import CompositionSearch from "@/components/common/CompositionSearch";
+import ArtistDisplay from "@/components/common/ArtistDisplay";
+import CompositionDisplay from "@/components/common/CompositionDisplay";
+
+const STORAGE_KEY = 'albums_page_state';
+
+interface PageState {
+  selectedRecordingId?: number;
+  albums: Album[];
+}
 
 export default function AlbumsPage() {
   const [albums, setAlbums] = useState<Album[]>([]);
@@ -19,8 +27,7 @@ export default function AlbumsPage() {
   const [editingAlbum, setEditingAlbum] = useState<Album | null>(null);
 
   // Filter state
-  const [selectedCompositionId, setSelectedCompositionId] = useState<number | undefined>(undefined);
-  const [filterComposerId, setFilterComposerId] = useState<number>(0);
+  const [selectedRecordingId, setSelectedRecordingId] = useState<number | undefined>(undefined);
   const [formData, setFormData] = useState<AlbumCreate>({
     title: "",
     album_type: "LP",
@@ -30,9 +37,41 @@ export default function AlbumsPage() {
   });
   const [uploading, setUploading] = useState(false);
 
+  // 페이지 상태를 localStorage에 저장
+  const savePageState = (state: PageState) => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (err) {
+      console.error('Failed to save page state:', err);
+    }
+  };
+
+  // localStorage에서 페이지 상태 복원
+  const loadPageState = (): PageState | null => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      return saved ? JSON.parse(saved) : null;
+    } catch (err) {
+      console.error('Failed to load page state:', err);
+      return null;
+    }
+  };
+
   useEffect(() => {
     loadData();
   }, []);
+
+  useEffect(() => {
+    // recordings가 로드된 후 저장된 상태 복원
+    if (recordings.length === 0) return;
+
+    const savedState = loadPageState();
+    if (savedState) {
+      setSelectedRecordingId(savedState.selectedRecordingId);
+      setAlbums(savedState.albums);
+      setLoading(false);
+    }
+  }, [recordings]);
 
   const loadData = async () => {
     try {
@@ -44,7 +83,6 @@ export default function AlbumsPage() {
       ]);
 
       const sortedComposers = composersData.sort((a, b) => a.name.localeCompare(b.name));
-      setAlbums([]);
       setRecordings(recordingsData);
       setComposers(sortedComposers);
       setCompositions(compositionsData);
@@ -56,26 +94,20 @@ export default function AlbumsPage() {
     }
   };
 
-  const handleFilterComposerChange = (composerId: number) => {
-    setFilterComposerId(composerId);
-    setSelectedCompositionId(undefined);
-  };
-
-  const handleFilterCompositionSelect = async (compositionId: number) => {
-    setSelectedCompositionId(compositionId);
-
+  const loadAlbumsByRecording = async (recordingId: number) => {
     try {
       const albumsData = await apiClient.getAlbums(0, 1000);
       setAlbums(albumsData);
+      setError(null);
+
+      // 상태 저장
+      savePageState({
+        selectedRecordingId: recordingId,
+        albums: albumsData
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : "앨범 목록을 불러오는데 실패했습니다");
     }
-  };
-
-  const handleFilterClear = () => {
-    setFilterComposerId(0);
-    setSelectedCompositionId(undefined);
-    setAlbums([]);
   };
 
   const getRecordingDisplay = (recordingId: number): string => {
@@ -94,12 +126,13 @@ export default function AlbumsPage() {
     return composer?.name || "-";
   };
 
-  const getCompositionTitle = (compositionId: number): string => {
+  const getCompositionDisplay = (compositionId: number): { title: string; catalogNumber: string | null } => {
     const composition = compositions.find(c => c.id === compositionId);
-    if (!composition) return "-";
-    return composition.catalog_number
-      ? `${composition.catalog_number} - ${composition.title}`
-      : composition.title;
+    if (!composition) return { title: "-", catalogNumber: null };
+    return {
+      title: composition.title,
+      catalogNumber: composition.catalog_number || null
+    };
   };
 
   const getPrimaryImage = (album: Album): string | null => {
@@ -223,9 +256,8 @@ export default function AlbumsPage() {
         await apiClient.createAlbum(data);
       }
 
-      if (selectedCompositionId) {
-        const albumsData = await apiClient.getAlbums(0, 1000);
-        setAlbums(albumsData);
+      if (selectedRecordingId) {
+        loadAlbumsByRecording(selectedRecordingId);
       }
       handleCloseModal();
     } catch (err) {
@@ -280,19 +312,7 @@ export default function AlbumsPage() {
       <ComponentCard
         title=""
         headerAction={
-          <div className="flex items-center justify-between w-full gap-4">
-            <CompositionSearch
-              composers={composers}
-              compositions={compositions}
-              selectedComposerId={filterComposerId}
-              selectedCompositionId={selectedCompositionId}
-              onComposerChange={handleFilterComposerChange}
-              onCompositionSelect={handleFilterCompositionSelect}
-              onClear={handleFilterClear}
-              showComposerSelect={true}
-              showLabels={false}
-              className="flex items-center gap-4"
-            />
+          <div className="flex justify-end w-full">
             <button
               onClick={() => handleOpenModal()}
               className="inline-flex items-center justify-center gap-2 rounded-md bg-brand-500 px-3 py-2 text-center text-sm font-medium text-white hover:bg-brand-600 whitespace-nowrap"
@@ -308,7 +328,7 @@ export default function AlbumsPage() {
           <table className="w-full table-auto">
             <thead>
               <tr className="border-b border-gray-200 bg-gray-50 text-left dark:border-gray-800 dark:bg-gray-800">
-                <th className="px-4 py-3 font-bold text-gray-500 text-theme-xs dark:text-gray-400">
+                <th className="px-4 py-3 font-bold text-gray-500 text-theme-xs dark:text-gray-400 text-center">
                   앨범
                 </th>
                 <th className="px-4 py-3 font-bold text-gray-500 text-theme-xs dark:text-gray-400">
@@ -317,24 +337,27 @@ export default function AlbumsPage() {
                 <th className="px-4 py-3 font-bold text-gray-500 text-theme-xs dark:text-gray-400">
                   작곡
                 </th>
-                <th className="px-4 py-3 font-bold text-gray-500 text-theme-xs dark:text-gray-400">
+                <th className="px-4 py-3 font-bold text-gray-500 text-theme-xs dark:text-gray-400 text-center">
                   녹음년도
                 </th>
                 <th className="px-4 py-3 font-bold text-gray-500 text-theme-xs dark:text-gray-400">
                   아티스트
                 </th>
-                <th className="px-4 py-3 font-bold text-gray-500 text-theme-xs dark:text-gray-400 w-32">
+                <th className="px-4 py-3 font-bold text-gray-500 text-theme-xs dark:text-gray-400 w-32 text-center">
                   작업
                 </th>
               </tr>
             </thead>
             <tbody>
               {(() => {
-                const filteredAlbums = selectedCompositionId
-                  ? albums.filter(album =>
-                      album.recordings.some(rec => rec.composition_id === selectedCompositionId)
-                    )
-                  : albums;
+                let filteredAlbums = albums;
+
+                // Filter by recording
+                if (selectedRecordingId) {
+                  filteredAlbums = filteredAlbums.filter(album =>
+                    album.recordings.some(rec => rec.id === selectedRecordingId)
+                  );
+                }
 
                 return filteredAlbums.length === 0 ? (
                   <tr>
@@ -342,9 +365,9 @@ export default function AlbumsPage() {
                       colSpan={6}
                       className="px-4 py-8 text-center text-gray-500 text-theme-sm dark:text-gray-400"
                     >
-                      {selectedCompositionId
-                        ? "선택한 작곡이 포함된 앨범이 없습니다."
-                        : "작곡가와 작곡을 선택하면 앨범을 볼 수 있습니다."}
+                      {selectedRecordingId
+                        ? "선택한 녹음이 포함된 앨범이 없습니다."
+                        : "녹음 페이지에서 앨범 개수를 클릭하면 해당 녹음이 포함된 앨범 목록을 볼 수 있습니다."}
                     </td>
                   </tr>
                 ) : (
@@ -352,7 +375,7 @@ export default function AlbumsPage() {
                     <Fragment key={album.id}>
                     <tr className="border-b border-gray-200 dark:border-gray-800">
                       <td className="px-4 py-3" rowSpan={Math.max(1, album.recordings.length)}>
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center justify-center gap-3">
                           <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
                             album.album_type === 'LP'
                               ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
@@ -377,9 +400,6 @@ export default function AlbumsPage() {
                               </div>
                             )}
                           </div>
-                          <span className="text-gray-800 text-theme-sm dark:text-white/90">
-                            {album.title}
-                          </span>
                         </div>
                       </td>
                       {album.recordings.length === 0 ? (
@@ -388,7 +408,7 @@ export default function AlbumsPage() {
                             녹음 없음
                           </td>
                           <td className="px-4 py-3 w-32" rowSpan={Math.max(1, album.recordings.length)}>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center justify-center gap-2">
                               <button
                                 onClick={() => handleOpenModal(album)}
                                 className="rounded p-2.5 text-brand-500 hover:bg-gray-100 dark:hover:bg-gray-800"
@@ -411,26 +431,21 @@ export default function AlbumsPage() {
                           <td className="px-4 py-3 text-gray-600 text-theme-sm dark:text-gray-400">
                             {getComposerName(album.recordings[0].composition_id)}
                           </td>
-                          <td className="px-4 py-3 text-gray-600 text-theme-sm dark:text-gray-400">
-                            {getCompositionTitle(album.recordings[0].composition_id)}
+                          <td className="px-4 py-3">
+                            <CompositionDisplay composition={getCompositionDisplay(album.recordings[0].composition_id)} />
                           </td>
-                          <td className="px-4 py-3 text-gray-600 text-theme-sm dark:text-gray-400">
+                          <td className="px-4 py-3 text-gray-600 text-theme-sm dark:text-gray-400 text-center">
                             {album.recordings[0].year || '-'}
                           </td>
-                          <td className="px-4 py-3 text-gray-600 text-theme-sm dark:text-gray-400">
+                          <td className="px-4 py-3">
                             <div className="space-y-1">
                               {album.recordings[0].artists.map(artist => (
-                                <div key={artist.id}>
-                                  {artist.name}
-                                  {artist.instrument && (
-                                    <span className="text-gray-500 dark:text-gray-500"> - {artist.instrument}</span>
-                                  )}
-                                </div>
+                                <ArtistDisplay key={artist.id} artist={artist} />
                               ))}
                             </div>
                           </td>
                           <td className="px-4 py-3 w-32" rowSpan={Math.max(1, album.recordings.length)}>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center justify-center gap-2">
                               <button
                                 onClick={() => handleOpenModal(album)}
                                 className="rounded p-2.5 text-brand-500 hover:bg-gray-100 dark:hover:bg-gray-800"
@@ -455,21 +470,16 @@ export default function AlbumsPage() {
                         <td className="px-4 py-3 text-gray-600 text-theme-sm dark:text-gray-400">
                           {getComposerName(recording.composition_id)}
                         </td>
-                        <td className="px-4 py-3 text-gray-600 text-theme-sm dark:text-gray-400">
-                          {getCompositionTitle(recording.composition_id)}
+                        <td className="px-4 py-3">
+                          <CompositionDisplay composition={getCompositionDisplay(recording.composition_id)} />
                         </td>
-                        <td className="px-4 py-3 text-gray-600 text-theme-sm dark:text-gray-400">
+                        <td className="px-4 py-3 text-gray-600 text-theme-sm dark:text-gray-400 text-center">
                           {recording.year || '-'}
                         </td>
-                        <td className="px-4 py-3 text-gray-600 text-theme-sm dark:text-gray-400">
+                        <td className="px-4 py-3">
                           <div className="space-y-1">
                             {recording.artists.map(artist => (
-                              <div key={artist.id}>
-                                {artist.name}
-                                {artist.instrument && (
-                                  <span className="text-gray-500 dark:text-gray-500"> - {artist.instrument}</span>
-                                )}
-                              </div>
+                              <ArtistDisplay key={artist.id} artist={artist} />
                             ))}
                           </div>
                         </td>

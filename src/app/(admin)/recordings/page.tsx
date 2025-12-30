@@ -1,20 +1,32 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
-import { apiClient, Recording, RecordingCreate, Composition, Artist, Composer } from "@/lib/api";
+import { useRouter } from "next/navigation";
+import { apiClient, Recording, RecordingCreate, Composition, Artist, Composer, Album } from "@/lib/api";
 import { PlusIcon, PencilIcon, TrashBinIcon, CloseIcon } from "@/icons/index";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import ComponentCard from "@/components/common/ComponentCard";
 import CompositionSearch from "@/components/common/CompositionSearch";
 import ErrorAlert from "@/components/common/ErrorAlert";
+import ArtistDisplay from "@/components/common/ArtistDisplay";
+import CompositionDisplay from "@/components/common/CompositionDisplay";
+
+const STORAGE_KEY = 'recordings_page_state';
+
+interface PageState {
+  selectedCompositionId?: number;
+  filterComposerId: number;
+  filterSelectedArtistId?: number;
+  recordings: Recording[];
+}
 
 export default function RecordingsPage() {
-  const searchParams = useSearchParams();
+  const router = useRouter();
   const [recordings, setRecordings] = useState<Recording[]>([]);
   const [compositions, setCompositions] = useState<Composition[]>([]);
   const [composers, setComposers] = useState<Composer[]>([]);
   const [artists, setArtists] = useState<Artist[]>([]);
+  const [albums, setAlbums] = useState<Album[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -42,36 +54,57 @@ export default function RecordingsPage() {
   const [selectedArtists, setSelectedArtists] = useState<Artist[]>([]);
   const [highlightedArtistIndex, setHighlightedArtistIndex] = useState<number>(-1);
 
+  // 페이지 상태를 localStorage에 저장
+  const savePageState = (state: PageState) => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (err) {
+      console.error('Failed to save page state:', err);
+    }
+  };
+
+  // localStorage에서 페이지 상태 복원
+  const loadPageState = (): PageState | null => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      return saved ? JSON.parse(saved) : null;
+    } catch (err) {
+      console.error('Failed to load page state:', err);
+      return null;
+    }
+  };
+
   useEffect(() => {
     loadData();
   }, []);
 
   useEffect(() => {
-    const compositionParam = searchParams.get('composition');
-    if (compositionParam) {
-      const compositionId = parseInt(compositionParam);
-      if (!isNaN(compositionId) && compositions.length > 0) {
-        const composition = compositions.find(c => c.id === compositionId);
-        if (composition) {
-          setFilterComposerId(composition.composer_id);
-          setSelectedCompositionId(compositionId);
-          loadRecordings(compositionId, undefined, filterSelectedArtistId);
-        }
-      }
+    // compositions와 artists가 로드된 후 저장된 상태 복원
+    if (compositions.length === 0 || artists.length === 0) return;
+
+    const savedState = loadPageState();
+    if (savedState) {
+      setSelectedCompositionId(savedState.selectedCompositionId);
+      setFilterComposerId(savedState.filterComposerId);
+      setFilterSelectedArtistId(savedState.filterSelectedArtistId);
+      setRecordings(savedState.recordings);
+      setLoading(false);
     }
-  }, [searchParams, compositions, filterSelectedArtistId]);
+  }, [compositions, artists]);
 
   const loadData = async () => {
     try {
       setLoading(true);
-      const [composersData, artistsData] = await Promise.all([
+      const [composersData, artistsData, albumsData] = await Promise.all([
         apiClient.getComposers(0, 100),
         apiClient.getArtists(0, 100),
+        apiClient.getAlbums(0, 1000),
       ]);
 
       const sortedComposers = composersData.sort((a, b) => a.name.localeCompare(b.name));
       setComposers(sortedComposers);
       setArtists(artistsData);
+      setAlbums(albumsData);
       setRecordings([]);
 
       // Load all compositions
@@ -90,6 +123,12 @@ export default function RecordingsPage() {
     // Only load if composition, composer, or artist is selected
     if (!compositionId && !composerId && !artistId) {
       setRecordings([]);
+      savePageState({
+        selectedCompositionId: undefined,
+        filterComposerId: composerId || 0,
+        filterSelectedArtistId: undefined,
+        recordings: []
+      });
       return;
     }
 
@@ -97,6 +136,14 @@ export default function RecordingsPage() {
       const data = await apiClient.getRecordings(0, 1000, compositionId, composerId, artistId);
       setRecordings(data);
       setError(null);
+
+      // 상태 저장
+      savePageState({
+        selectedCompositionId: compositionId,
+        filterComposerId: composerId || filterComposerId,
+        filterSelectedArtistId: artistId,
+        recordings: data
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : "녹음 목록을 불러오는데 실패했습니다");
     }
@@ -113,6 +160,12 @@ export default function RecordingsPage() {
       loadRecordings(undefined, undefined, filterSelectedArtistId);
     } else {
       setRecordings([]);
+      savePageState({
+        selectedCompositionId: undefined,
+        filterComposerId: composerId,
+        filterSelectedArtistId: undefined,
+        recordings: []
+      });
     }
   };
 
@@ -132,6 +185,12 @@ export default function RecordingsPage() {
       loadRecordings(undefined, undefined, filterSelectedArtistId);
     } else {
       setRecordings([]);
+      savePageState({
+        selectedCompositionId: undefined,
+        filterComposerId: filterComposerId,
+        filterSelectedArtistId: undefined,
+        recordings: []
+      });
     }
   };
 
@@ -180,6 +239,12 @@ export default function RecordingsPage() {
       loadRecordings(selectedCompositionId, undefined, undefined);
     } else {
       setRecordings([]);
+      savePageState({
+        selectedCompositionId: undefined,
+        filterComposerId: filterComposerId,
+        filterSelectedArtistId: undefined,
+        recordings: []
+      });
     }
   };
 
@@ -216,6 +281,31 @@ export default function RecordingsPage() {
     return artist.instrument ? `${artist.name} - ${artist.instrument}` : artist.name;
   };
 
+  const getAlbumCount = (recordingId: number): number => {
+    return albums.filter(album =>
+      album.recordings.some(rec => rec.id === recordingId)
+    ).length;
+  };
+
+  const handleAlbumClick = async (recordingId: number) => {
+    try {
+      // 앨범 데이터를 미리 로드하고 앨범 페이지의 localStorage에 저장
+      const albumsData = await apiClient.getAlbums(0, 1000);
+      const pageState = {
+        selectedRecordingId: recordingId,
+        albums: albumsData
+      };
+      localStorage.setItem('albums_page_state', JSON.stringify(pageState));
+
+      // 앨범 페이지로 이동
+      router.push(`/albums`);
+    } catch (err) {
+      console.error('Failed to load albums:', err);
+      // 에러가 발생해도 페이지는 이동
+      router.push(`/albums`);
+    }
+  };
+
   const getComposerName = (compositionId: number): string => {
     const composition = compositions.find(c => c.id === compositionId);
     if (!composition) return "-";
@@ -223,12 +313,13 @@ export default function RecordingsPage() {
     return composer?.name || "-";
   };
 
-  const getCompositionTitle = (compositionId: number): string => {
+  const getCompositionDisplay = (compositionId: number): { title: string; catalogNumber: string | null } => {
     const composition = compositions.find(c => c.id === compositionId);
-    if (!composition) return "-";
-    return composition.catalog_number
-      ? `${composition.catalog_number} - ${composition.title}`
-      : composition.title;
+    if (!composition) return { title: "-", catalogNumber: null };
+    return {
+      title: composition.title,
+      catalogNumber: composition.catalog_number || null
+    };
   };
 
   const handleOpenModal = (recording?: Recording) => {
@@ -355,6 +446,35 @@ export default function RecordingsPage() {
     }));
   };
 
+  const handleArtistReorder = (fromIndex: number, toIndex: number) => {
+    const newSelectedArtists = [...selectedArtists];
+    const [movedArtist] = newSelectedArtists.splice(fromIndex, 1);
+    newSelectedArtists.splice(toIndex, 0, movedArtist);
+    setSelectedArtists(newSelectedArtists);
+    setFormData(prev => ({
+      ...prev,
+      artist_ids: newSelectedArtists.map(a => a.id)
+    }));
+  };
+
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', index.toString());
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDrop = (e: React.DragEvent, toIndex: number) => {
+    e.preventDefault();
+    const fromIndex = parseInt(e.dataTransfer.getData('text/plain'), 10);
+    if (fromIndex !== toIndex) {
+      handleArtistReorder(fromIndex, toIndex);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -414,8 +534,8 @@ export default function RecordingsPage() {
       <ComponentCard
         title=""
         headerAction={
-          <div className="w-full">
-            <div className="flex items-center justify-between w-full gap-4 mb-4">
+          <div className="flex items-center justify-between w-full gap-4">
+            <div className="flex items-center gap-4 flex-1">
               <CompositionSearch
                 composers={composers}
                 compositions={compositions}
@@ -428,79 +548,80 @@ export default function RecordingsPage() {
                 showLabels={false}
                 className="flex items-center gap-4"
               />
-              <button
-                onClick={() => handleOpenModal()}
-                className="inline-flex items-center justify-center gap-2 rounded-md bg-brand-500 px-3 py-2 text-center text-sm font-medium text-white hover:bg-brand-600 whitespace-nowrap"
-              >
-                <PlusIcon className="w-4 h-4" />
-                녹음 추가
-              </button>
-            </div>
 
-            {/* Artist Search - Second Row */}
-            <div className="relative w-[280px]">
-              {filterSelectedArtistId ? (
-                <div className="flex items-center gap-2 p-2.5 rounded-md bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700">
-                  <span className="flex-1 text-sm text-gray-900 dark:text-white truncate">
-                    {getArtistName(filterSelectedArtistId)}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={handleFilterArtistClear}
-                    className="text-red-500 hover:text-red-600 font-bold text-xl leading-none flex-shrink-0"
-                    title="선택 취소"
-                  >
-                    ×
-                  </button>
-                </div>
-              ) : (
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={filterArtistSearchQuery}
-                    onChange={(e) => handleFilterArtistSearchChange(e.target.value)}
-                    onKeyDown={handleFilterArtistKeyDown}
-                    placeholder="아티스트 검색 (2글자 이상)..."
-                    className="w-full rounded-md border border-gray-300 bg-white px-4 py-2.5 pr-10 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                  />
-                  {filterArtistSearchQuery && (
+              {/* Artist Search */}
+              <div className="relative w-[280px]">
+                {filterSelectedArtistId ? (
+                  <div className="flex items-center gap-2 p-2.5 rounded-md bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700">
+                    <span className="flex-1 text-sm text-gray-900 dark:text-white truncate">
+                      {getArtistName(filterSelectedArtistId)}
+                    </span>
                     <button
                       type="button"
-                      onClick={() => {
-                        setFilterArtistSearchQuery("");
-                        setFilterFilteredArtists([]);
-                        setFilterHighlightedArtistIndex(-1);
-                      }}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 text-xl font-bold leading-none"
-                      title="검색 취소"
+                      onClick={handleFilterArtistClear}
+                      className="text-red-500 hover:text-red-600 font-bold text-xl leading-none flex-shrink-0"
+                      title="선택 취소"
                     >
                       ×
                     </button>
-                  )}
-                  {filterFilteredArtists.length > 0 && (
-                    <div className="absolute z-10 mt-2 w-full max-h-60 overflow-y-auto rounded-md border border-gray-300 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
-                      {filterFilteredArtists.map((artist, index) => (
-                        <button
-                          key={artist.id}
-                          type="button"
-                          onClick={() => handleFilterArtistSelect(artist.id)}
-                          className={`w-full text-left px-4 py-2 text-sm text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 last:border-b-0 ${
-                            index === filterHighlightedArtistIndex
-                              ? 'bg-brand-500 text-white dark:bg-brand-600'
-                              : 'hover:bg-gray-100 dark:hover:bg-gray-700'
-                          }`}
-                        >
-                          {artist.name}
-                          {artist.instrument && (
-                            <span className={index === filterHighlightedArtistIndex ? 'text-white/80' : 'text-gray-500 dark:text-gray-400'}> - {artist.instrument}</span>
-                          )}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
+                  </div>
+                ) : (
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={filterArtistSearchQuery}
+                      onChange={(e) => handleFilterArtistSearchChange(e.target.value)}
+                      onKeyDown={handleFilterArtistKeyDown}
+                      placeholder="아티스트 검색 (2글자 이상)..."
+                      className="w-full rounded-md border border-gray-300 bg-white px-4 py-2.5 pr-10 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                    />
+                    {filterArtistSearchQuery && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFilterArtistSearchQuery("");
+                          setFilterFilteredArtists([]);
+                          setFilterHighlightedArtistIndex(-1);
+                        }}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 text-xl font-bold leading-none"
+                        title="검색 취소"
+                      >
+                        ×
+                      </button>
+                    )}
+                    {filterFilteredArtists.length > 0 && (
+                      <div className="absolute z-10 mt-2 w-full max-h-60 overflow-y-auto rounded-md border border-gray-300 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
+                        {filterFilteredArtists.map((artist, index) => (
+                          <button
+                            key={artist.id}
+                            type="button"
+                            onClick={() => handleFilterArtistSelect(artist.id)}
+                            className={`w-full text-left px-4 py-2 text-sm text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 last:border-b-0 ${
+                              index === filterHighlightedArtistIndex
+                                ? 'bg-brand-500 text-white dark:bg-brand-600'
+                                : 'hover:bg-gray-100 dark:hover:bg-gray-700'
+                            }`}
+                          >
+                            {artist.name}
+                            {artist.instrument && (
+                              <span className={index === filterHighlightedArtistIndex ? 'text-white/80' : 'text-gray-500 dark:text-gray-400'}> - {artist.instrument}</span>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
+
+            <button
+              onClick={() => handleOpenModal()}
+              className="inline-flex items-center justify-center gap-2 rounded-md bg-brand-500 px-3 py-2 text-center text-sm font-medium text-white hover:bg-brand-600 whitespace-nowrap"
+            >
+              <PlusIcon className="w-4 h-4" />
+              녹음 추가
+            </button>
           </div>
         }
       >
@@ -515,13 +636,16 @@ export default function RecordingsPage() {
                 <th className="px-4 py-3 font-bold text-gray-500 text-theme-xs dark:text-gray-400">
                   작곡
                 </th>
+                <th className="px-4 py-3 font-bold text-gray-500 text-theme-xs dark:text-gray-400 text-center">
+                  녹음년도
+                </th>
                 <th className="px-4 py-3 font-bold text-gray-500 text-theme-xs dark:text-gray-400">
                   아티스트
                 </th>
-                <th className="px-4 py-3 font-bold text-gray-500 text-theme-xs dark:text-gray-400">
-                  녹음년도
+                <th className="px-4 py-3 font-bold text-gray-500 text-theme-xs dark:text-gray-400 text-center">
+                  앨범
                 </th>
-                <th className="px-4 py-3 font-bold text-gray-500 text-theme-xs dark:text-gray-400 w-32">
+                <th className="px-4 py-3 font-bold text-gray-500 text-theme-xs dark:text-gray-400 w-32 text-center">
                   작업
                 </th>
               </tr>
@@ -530,7 +654,7 @@ export default function RecordingsPage() {
               {recordings.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={5}
+                    colSpan={6}
                     className="px-4 py-8 text-center text-gray-500 text-theme-sm dark:text-gray-400"
                   >
                     {selectedCompositionId || filterSelectedArtistId
@@ -547,27 +671,35 @@ export default function RecordingsPage() {
                     <td className="px-4 py-3 text-gray-800 text-theme-sm dark:text-white/90">
                       {getComposerName(recording.composition_id)}
                     </td>
-                    <td className="px-4 py-3 text-gray-800 text-theme-sm dark:text-white/90">
-                      {getCompositionTitle(recording.composition_id)}
+                    <td className="px-4 py-3">
+                      <CompositionDisplay composition={getCompositionDisplay(recording.composition_id)} />
                     </td>
-                    <td className="px-4 py-3 text-gray-500 text-theme-sm dark:text-gray-400">
+                    <td className="px-4 py-3 text-gray-500 text-theme-sm dark:text-gray-400 text-center">
+                      {recording.year || "-"}
+                    </td>
+                    <td className="px-4 py-3">
                       {recording.artists.length > 0 ? (
                         <div className="flex flex-col gap-1">
-                          {recording.artists.map((artist, index) => (
-                            <div key={index}>
-                              {artist.name}{artist.instrument ? ` - ${artist.instrument}` : ''}
-                            </div>
+                          {recording.artists.map((artist) => (
+                            <ArtistDisplay key={artist.id} artist={artist} />
                           ))}
                         </div>
                       ) : (
-                        "-"
+                        <span className="text-gray-500 text-theme-sm dark:text-gray-400">-</span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-gray-500 text-theme-sm dark:text-gray-400">
-                      {recording.year || "-"}
+                    <td className="px-4 py-3 text-center">
+                      <button
+                        onClick={() => handleAlbumClick(recording.id)}
+                        className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 underline cursor-pointer transition-colors"
+                        title={`View albums with this recording`}
+                        style={{ fontFamily: 'monospace' }}
+                      >
+                        {getAlbumCount(recording.id)}
+                      </button>
                     </td>
                     <td className="px-4 py-3 w-32">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center justify-center gap-2">
                         <button
                           onClick={() => handleOpenModal(recording)}
                           className="rounded p-2.5 text-brand-500 hover:bg-gray-100 dark:hover:bg-gray-800"
@@ -646,17 +778,23 @@ export default function RecordingsPage() {
                 {/* Selected Artists List */}
                 {selectedArtists.length > 0 && (
                   <div className="mb-3 space-y-2">
-                    {selectedArtists.map((artist) => (
+                    {selectedArtists.map((artist, index) => (
                       <div
                         key={artist.id}
-                        className="flex items-center justify-between gap-2 p-2.5 rounded-md bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700"
+                        draggable
+                        onDragStart={(e) => handleDragStart(e, index)}
+                        onDragOver={handleDragOver}
+                        onDrop={(e) => handleDrop(e, index)}
+                        className="flex items-center justify-between gap-2 p-2.5 rounded-md bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 cursor-move hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                       >
-                        <span className="flex-1 text-sm text-gray-900 dark:text-white">
-                          {artist.name}
-                          {artist.instrument && (
-                            <span className="text-gray-500 dark:text-gray-400"> - {artist.instrument}</span>
-                          )}
-                        </span>
+                        <div className="flex items-center gap-2 flex-1">
+                          <span className="text-gray-400 dark:text-gray-500 text-xs font-mono">
+                            {index + 1}.
+                          </span>
+                          <div className="flex-1">
+                            <ArtistDisplay artist={artist} />
+                          </div>
+                        </div>
                         <button
                           type="button"
                           onClick={() => handleArtistRemove(artist.id)}

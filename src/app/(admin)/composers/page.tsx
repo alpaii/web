@@ -220,16 +220,16 @@ export default function ComposersPage() {
                 <th className="px-4 py-3 font-bold text-gray-500 text-theme-xs dark:text-gray-400">
                   이름
                 </th>
-                <th className="px-4 py-3 font-bold text-gray-500 text-theme-xs dark:text-gray-400 text-center">
-                  작곡
-                </th>
                 <th className="px-4 py-3 font-bold text-gray-500 text-theme-xs dark:text-gray-400">
                   생애
                 </th>
-                <th className="px-4 py-3 font-bold text-gray-500 text-theme-xs dark:text-gray-400">
+                <th className="px-4 py-3 font-bold text-gray-500 text-theme-xs dark:text-gray-400 text-center">
                   국적
                 </th>
-                <th className="px-4 py-3 font-bold text-gray-500 text-theme-xs dark:text-gray-400 w-32">
+                <th className="px-4 py-3 font-bold text-gray-500 text-theme-xs dark:text-gray-400 text-center">
+                  작곡
+                </th>
+                <th className="px-4 py-3 font-bold text-gray-500 text-theme-xs dark:text-gray-400 w-32 text-center">
                   작업
                 </th>
               </tr>
@@ -259,9 +259,33 @@ export default function ComposersPage() {
                         size="md"
                       />
                     </td>
+                    <td className="px-4 py-3 text-gray-500 text-theme-sm dark:text-gray-400" style={{ fontFamily: 'monospace' }}>
+                      {formatLife(composer.birth_year, composer.death_year)}
+                    </td>
+                    <td className="px-4 py-3 text-gray-500 text-theme-sm dark:text-gray-400 text-center">
+                      {composer.nationality || "-"}
+                    </td>
                     <td className="px-4 py-3 text-center">
                       <button
-                        onClick={() => router.push(`/compositions?composer=${composer.id}`)}
+                        onClick={async () => {
+                          try {
+                            // 작곡 데이터를 미리 로드하고 작곡 페이지의 localStorage에 저장
+                            const compositionsData = await apiClient.getCompositions(0, 1000, composer.id);
+                            const pageState = {
+                              selectedComposerId: composer.id,
+                              searchQuery: '',
+                              compositions: compositionsData
+                            };
+                            localStorage.setItem('compositions_page_state', JSON.stringify(pageState));
+
+                            // 작곡 페이지로 이동
+                            router.push(`/compositions`);
+                          } catch (err) {
+                            console.error('Failed to load compositions:', err);
+                            // 에러가 발생해도 페이지는 이동
+                            router.push(`/compositions`);
+                          }
+                        }}
                         className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 underline cursor-pointer transition-colors"
                         title={`View compositions by ${composer.name}`}
                         style={{ fontFamily: 'monospace' }}
@@ -269,14 +293,8 @@ export default function ComposersPage() {
                         {composer.composition_count}
                       </button>
                     </td>
-                    <td className="px-4 py-3 text-gray-500 text-theme-sm dark:text-gray-400" style={{ fontFamily: 'monospace' }}>
-                      {formatLife(composer.birth_year, composer.death_year)}
-                    </td>
-                    <td className="px-4 py-3 text-gray-500 text-theme-sm dark:text-gray-400">
-                      {composer.nationality || "-"}
-                    </td>
                     <td className="px-4 py-3 w-32">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center justify-center gap-2">
                         <button
                           onClick={() => handleOpenModal(composer)}
                           className="rounded p-2.5 text-brand-500 hover:bg-gray-100 dark:hover:bg-gray-800"

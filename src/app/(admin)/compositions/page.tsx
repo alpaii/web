@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { apiClient, Composition, CompositionCreate, Composer } from "@/lib/api";
 import { PlusIcon, PencilIcon, TrashBinIcon, CloseIcon } from "@/icons/index";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
@@ -10,8 +10,16 @@ import ErrorAlert from "@/components/common/ErrorAlert";
 import SearchInput from "@/components/common/SearchInput";
 import ComposerSelect from "@/components/common/ComposerSelect";
 
+const STORAGE_KEY = 'compositions_page_state';
+
+interface PageState {
+  selectedComposerId?: number;
+  searchQuery: string;
+  compositions: Composition[];
+}
+
 export default function CompositionsPage() {
-  const searchParams = useSearchParams();
+  const router = useRouter();
   const [compositions, setCompositions] = useState<Composition[]>([]);
   const [composers, setComposers] = useState<Composer[]>([]);
   const [loading, setLoading] = useState(true);
@@ -31,20 +39,42 @@ export default function CompositionsPage() {
     title: "",
   });
 
+  // 페이지 상태를 localStorage에 저장
+  const savePageState = (state: PageState) => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (err) {
+      console.error('Failed to save page state:', err);
+    }
+  };
+
+  // localStorage에서 페이지 상태 복원
+  const loadPageState = (): PageState | null => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      return saved ? JSON.parse(saved) : null;
+    } catch (err) {
+      console.error('Failed to load page state:', err);
+      return null;
+    }
+  };
+
   useEffect(() => {
     loadComposers();
   }, []);
 
   useEffect(() => {
-    const composerParam = searchParams.get('composer');
-    if (composerParam) {
-      const composerId = parseInt(composerParam);
-      if (!isNaN(composerId)) {
-        setSelectedComposerId(composerId);
-        loadCompositions(composerId);
-      }
+    // composers가 로드된 후 저장된 상태 복원
+    if (composers.length === 0) return;
+
+    const savedState = loadPageState();
+    if (savedState) {
+      setSelectedComposerId(savedState.selectedComposerId);
+      setSearchQuery(savedState.searchQuery);
+      setCompositions(savedState.compositions);
+      setLoading(false);
     }
-  }, [searchParams]);
+  }, [composers]);
 
   const loadComposers = async () => {
     try {
@@ -66,23 +96,37 @@ export default function CompositionsPage() {
       if (!composerId) {
         setCompositions([]);
         setError(null);
+        savePageState({
+          selectedComposerId: undefined,
+          searchQuery: searchTerm || '',
+          compositions: []
+        });
         return;
       }
       const data = await apiClient.getCompositions(0, 1000, composerId, searchTerm);
       setCompositions(data);
       setError(null);
+
+      // 상태 저장
+      savePageState({
+        selectedComposerId: composerId,
+        searchQuery: searchTerm || '',
+        compositions: data
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : "작곡을 불러오지 못했습니다");
     }
   };
 
   const handleSearch = async () => {
-    await loadCompositions(selectedComposerId, searchQuery.trim() || undefined);
+    const search = searchQuery.trim() || undefined;
+    await loadCompositions(selectedComposerId, search);
   };
 
   const handleComposerFilter = async (composerId: number | undefined) => {
     setSelectedComposerId(composerId);
-    await loadCompositions(composerId, searchQuery.trim() || undefined);
+    const search = searchQuery.trim() || undefined;
+    await loadCompositions(composerId, search);
   };
 
   const handleOpenModal = (composition?: Composition) => {
@@ -212,7 +256,7 @@ export default function CompositionsPage() {
                 <th className="px-4 py-3 font-bold text-gray-500 text-theme-xs dark:text-gray-400 w-24 text-center">
                   녹음
                 </th>
-                <th className="px-4 py-3 font-bold text-gray-500 text-theme-xs dark:text-gray-400 w-32">
+                <th className="px-4 py-3 font-bold text-gray-500 text-theme-xs dark:text-gray-400 w-32 text-center">
                   작업
                 </th>
               </tr>
@@ -245,20 +289,39 @@ export default function CompositionsPage() {
                     </td>
                     <td className="px-4 py-3 w-24 text-center">
                       {composition.recording_count > 0 ? (
-                        <a
-                          href={`/recordings?composition=${composition.id}`}
+                        <button
+                          onClick={async () => {
+                            try {
+                              // 녹음 데이터를 미리 로드하고 녹음 페이지의 localStorage에 저장
+                              const recordingsData = await apiClient.getRecordings(0, 1000, composition.id);
+                              const pageState = {
+                                selectedCompositionId: composition.id,
+                                filterComposerId: composition.composer_id,
+                                filterSelectedArtistId: undefined,
+                                recordings: recordingsData
+                              };
+                              localStorage.setItem('recordings_page_state', JSON.stringify(pageState));
+
+                              // 녹음 페이지로 이동
+                              router.push(`/recordings`);
+                            } catch (err) {
+                              console.error('Failed to load recordings:', err);
+                              // 에러가 발생해도 페이지는 이동
+                              router.push(`/recordings`);
+                            }
+                          }}
                           className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 underline cursor-pointer transition-colors"
                           title={`View recordings of ${composition.title}`}
                           style={{ fontFamily: 'monospace' }}
                         >
                           {composition.recording_count}
-                        </a>
+                        </button>
                       ) : (
                         <span className="text-gray-400 dark:text-gray-600" style={{ fontFamily: 'monospace' }}>0</span>
                       )}
                     </td>
                     <td className="px-4 py-3 w-32">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center justify-center gap-2">
                         <button
                           onClick={() => handleOpenModal(composition)}
                           className="rounded p-2.5 text-brand-500 hover:bg-gray-100 dark:hover:bg-gray-800"

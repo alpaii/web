@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { apiClient, Artist, ArtistCreate, ArtistUpdate } from "@/lib/api";
 import { PlusIcon, PencilIcon, TrashBinIcon, CloseIcon } from "@/icons/index";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
@@ -9,6 +10,7 @@ import ErrorAlert from "@/components/common/ErrorAlert";
 import SearchInput from "@/components/common/SearchInput";
 
 export default function ArtistsPage() {
+  const router = useRouter();
   const [artists, setArtists] = useState<Artist[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -176,16 +178,16 @@ export default function ArtistsPage() {
                 <th className="px-4 py-3 font-bold text-gray-500 text-theme-xs dark:text-gray-400">
                   생애
                 </th>
-                <th className="px-4 py-3 font-bold text-gray-500 text-theme-xs dark:text-gray-400">
+                <th className="px-4 py-3 font-bold text-gray-500 text-theme-xs dark:text-gray-400 text-center">
                   국적
                 </th>
-                <th className="px-4 py-3 font-bold text-gray-500 text-theme-xs dark:text-gray-400">
+                <th className="px-4 py-3 font-bold text-gray-500 text-theme-xs dark:text-gray-400 text-center">
                   악기
                 </th>
-                <th className="px-4 py-3 font-bold text-gray-500 text-theme-xs dark:text-gray-400">
+                <th className="px-4 py-3 font-bold text-gray-500 text-theme-xs dark:text-gray-400 text-center">
                   녹음
                 </th>
-                <th className="px-4 py-3 font-bold text-gray-500 text-theme-xs dark:text-gray-400 w-32">
+                <th className="px-4 py-3 font-bold text-gray-500 text-theme-xs dark:text-gray-400 w-32 text-center">
                   작업
                 </th>
               </tr>
@@ -214,17 +216,43 @@ export default function ArtistsPage() {
                     <td className="px-4 py-3 text-gray-500 text-theme-sm dark:text-gray-400" style={{ fontFamily: 'monospace' }}>
                       {formatLife(artist.birth_year, artist.death_year)}
                     </td>
-                    <td className="px-4 py-3 text-gray-500 text-theme-sm dark:text-gray-400">
+                    <td className="px-4 py-3 text-gray-500 text-theme-sm dark:text-gray-400 text-center">
                       {artist.nationality || "-"}
                     </td>
-                    <td className="px-4 py-3 text-gray-500 text-theme-sm dark:text-gray-400">
+                    <td className="px-4 py-3 text-gray-500 text-theme-sm dark:text-gray-400 text-center">
                       {artist.instrument || "-"}
                     </td>
-                    <td className="px-4 py-3 text-gray-500 text-theme-sm dark:text-gray-400">
-                      {artist.recording_count}
+                    <td className="px-4 py-3 text-center">
+                      <button
+                        onClick={async () => {
+                          try {
+                            // 녹음 데이터를 미리 로드하고 녹음 페이지의 localStorage에 저장
+                            const recordingsData = await apiClient.getRecordings(0, 1000, undefined, undefined, artist.id);
+                            const pageState = {
+                              selectedCompositionId: undefined,
+                              filterComposerId: 0,
+                              filterSelectedArtistId: artist.id,
+                              recordings: recordingsData
+                            };
+                            localStorage.setItem('recordings_page_state', JSON.stringify(pageState));
+
+                            // 녹음 페이지로 이동
+                            router.push(`/recordings`);
+                          } catch (err) {
+                            console.error('Failed to load recordings:', err);
+                            // 에러가 발생해도 페이지는 이동
+                            router.push(`/recordings`);
+                          }
+                        }}
+                        className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 underline cursor-pointer transition-colors"
+                        title={`View recordings by ${artist.name}`}
+                        style={{ fontFamily: 'monospace' }}
+                      >
+                        {artist.recording_count}
+                      </button>
                     </td>
-                    <td className="px-4 py-3 w-32">
-                      <div className="flex items-center gap-2">
+                    <td className="px-4 py-3 w-32 text-center">
+                      <div className="flex items-center justify-center gap-2">
                         <button
                           onClick={() => handleOpenModal(artist)}
                           className="rounded p-2.5 text-brand-500 hover:bg-gray-100 dark:hover:bg-gray-800"
