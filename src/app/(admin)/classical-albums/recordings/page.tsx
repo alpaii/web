@@ -298,11 +298,11 @@ export default function RecordingsPage() {
       localStorage.setItem('albums_page_state', JSON.stringify(pageState));
 
       // 앨범 페이지로 이동
-      router.push(`/albums`);
+      router.push(`/classical-albums/albums`);
     } catch (err) {
       console.error('Failed to load albums:', err);
       // 에러가 발생해도 페이지는 이동
-      router.push(`/albums`);
+      router.push(`/classical-albums/albums`);
     }
   };
 
@@ -535,7 +535,7 @@ export default function RecordingsPage() {
         title=""
         headerAction={
           <div className="flex items-center justify-between w-full gap-4">
-            <div className="flex items-center gap-4 flex-1">
+            <div className="flex items-center gap-4 flex-[2]">
               <CompositionSearch
                 composers={composers}
                 compositions={compositions}
@@ -546,7 +546,7 @@ export default function RecordingsPage() {
                 onClear={handleFilterClear}
                 showComposerSelect={true}
                 showLabels={false}
-                className="flex items-center gap-4"
+                className="flex items-center gap-4 flex-1"
               />
 
               {/* Artist Search */}
@@ -775,41 +775,8 @@ export default function RecordingsPage() {
                   아티스트 <span className="text-red-500">*</span>
                 </label>
 
-                {/* Selected Artists List */}
-                {selectedArtists.length > 0 && (
-                  <div className="mb-3 space-y-2">
-                    {selectedArtists.map((artist, index) => (
-                      <div
-                        key={artist.id}
-                        draggable
-                        onDragStart={(e) => handleDragStart(e, index)}
-                        onDragOver={handleDragOver}
-                        onDrop={(e) => handleDrop(e, index)}
-                        className="flex items-center justify-between gap-2 p-2.5 rounded-md bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 cursor-move hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                      >
-                        <div className="flex items-center gap-2 flex-1">
-                          <span className="text-gray-400 dark:text-gray-500 text-xs font-mono">
-                            {index + 1}.
-                          </span>
-                          <div className="flex-1">
-                            <ArtistDisplay artist={artist} />
-                          </div>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => handleArtistRemove(artist.id)}
-                          className="text-red-500 hover:text-red-600 font-bold text-xl leading-none"
-                          title="선택 취소"
-                        >
-                          ×
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
                 {/* Artist Search Input */}
-                <div className="relative">
+                <div className="relative mb-3">
                   <input
                     type="text"
                     value={artistSearchQuery}
@@ -854,10 +821,43 @@ export default function RecordingsPage() {
                     </div>
                   )}
                 </div>
+
+                {/* Selected count message */}
+                <p className="mb-2 text-xs text-gray-500 dark:text-gray-400">
+                  {selectedArtists.length}명 선택됨
+                </p>
+
+                {/* Selected Artists List */}
                 {selectedArtists.length > 0 && (
-                  <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                    {selectedArtists.length}명 선택됨
-                  </p>
+                  <div className="space-y-2">
+                    {selectedArtists.map((artist, index) => (
+                      <div
+                        key={artist.id}
+                        draggable
+                        onDragStart={(e) => handleDragStart(e, index)}
+                        onDragOver={handleDragOver}
+                        onDrop={(e) => handleDrop(e, index)}
+                        className="flex items-center justify-between gap-2 p-2.5 rounded-md bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 cursor-move hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                      >
+                        <div className="flex items-center gap-2 flex-1">
+                          <span className="text-gray-400 dark:text-gray-500 text-xs font-mono">
+                            {index + 1}.
+                          </span>
+                          <div className="flex-1">
+                            <ArtistDisplay artist={artist} />
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleArtistRemove(artist.id)}
+                          className="text-red-500 hover:text-red-600 font-bold text-xl leading-none"
+                          title="선택 취소"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
 

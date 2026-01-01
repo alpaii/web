@@ -102,28 +102,51 @@ export interface AlbumImage {
   is_primary: number;
 }
 
+export interface AlbumCustomUrl {
+  id: number;
+  album_id: number;
+  url_name: string;
+  url: string;
+  url_order: number;
+}
+
+export interface AlbumCustomUrlCreate {
+  url_name: string;
+  url: string;
+  url_order?: number;
+}
+
 export interface Album {
   id: number;
-  title: string;
   album_type: string;
+  discogs_url: string | null;
+  goclassic_url: string | null;
+  memo: string | null;
   recordings: Recording[];
   images: AlbumImage[];
+  custom_urls: AlbumCustomUrl[];
 }
 
 export interface AlbumCreate {
-  title: string;
   album_type?: string;
+  discogs_url?: string | null;
+  goclassic_url?: string | null;
+  memo?: string | null;
   recording_ids: number[];
   image_urls?: string[];
   primary_image_index?: number | null;
+  custom_urls?: AlbumCustomUrlCreate[];
 }
 
 export interface AlbumUpdate {
-  title?: string;
   album_type?: string;
+  discogs_url?: string | null;
+  goclassic_url?: string | null;
+  memo?: string | null;
   recording_ids?: number[];
   image_urls?: string[];
   primary_image_index?: number | null;
+  custom_urls?: AlbumCustomUrlCreate[];
 }
 
 class ApiClient {
@@ -341,7 +364,7 @@ class ApiClient {
   }
 
   // Albums API
-  async getAlbums(skip = 0, limit = 100, albumType?: string, search?: string): Promise<Album[]> {
+  async getAlbums(skip = 0, limit = 100, albumType?: string): Promise<Album[]> {
     const params = new URLSearchParams({
       skip: skip.toString(),
       limit: limit.toString(),
@@ -349,10 +372,6 @@ class ApiClient {
 
     if (albumType) {
       params.append('album_type', albumType);
-    }
-
-    if (search) {
-      params.append('search', search);
     }
 
     return this.request<Album[]>(`/api/albums/?${params.toString()}`);

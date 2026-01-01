@@ -237,11 +237,11 @@ export default function ArtistsPage() {
                             localStorage.setItem('recordings_page_state', JSON.stringify(pageState));
 
                             // 녹음 페이지로 이동
-                            router.push(`/recordings`);
+                            router.push(`/classical-albums/recordings`);
                           } catch (err) {
                             console.error('Failed to load recordings:', err);
                             // 에러가 발생해도 페이지는 이동
-                            router.push(`/recordings`);
+                            router.push(`/classical-albums/recordings`);
                           }
                         }}
                         className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 underline cursor-pointer transition-colors"

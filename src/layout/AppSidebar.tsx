@@ -48,11 +48,11 @@ const navItems: NavItem[] = [
     icon: <AudioIcon />,
     name: "클래식 앨범",
     subItems: [
-      { name: "작곡가", path: "/composers", pro: false },
-      { name: "작곡", path: "/compositions", pro: false },
-      { name: "아티스트", path: "/artists", pro: false },
-      { name: "녹음", path: "/recordings", pro: false },
-      { name: "앨범", path: "/albums", pro: false },
+      { name: "작곡가", path: "/classical-albums/composers", pro: false },
+      { name: "작곡", path: "/classical-albums/compositions", pro: false },
+      { name: "아티스트", path: "/classical-albums/artists", pro: false },
+      { name: "녹음", path: "/classical-albums/recordings", pro: false },
+      { name: "앨범", path: "/classical-albums/albums", pro: false },
     ],
   },
   {
@@ -246,7 +246,12 @@ const AppSidebar: React.FC = () => {
   const subMenuRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   // const isActive = (path: string) => path === pathname;
-   const isActive = useCallback((path: string) => path === pathname, [pathname]);
+   const isActive = useCallback((path: string) => {
+     // Exact match for root path
+     if (path === "/") return pathname === "/";
+     // For other paths, check if pathname starts with the path
+     return pathname === path || pathname.startsWith(path + "/");
+   }, [pathname]);
 
   useEffect(() => {
     // Check if the current path matches any submenu item

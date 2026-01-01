@@ -279,11 +279,11 @@ export default function ComposersPage() {
                             localStorage.setItem('compositions_page_state', JSON.stringify(pageState));
 
                             // 작곡 페이지로 이동
-                            router.push(`/compositions`);
+                            router.push(`/classical-albums/compositions`);
                           } catch (err) {
                             console.error('Failed to load compositions:', err);
                             // 에러가 발생해도 페이지는 이동
-                            router.push(`/compositions`);
+                            router.push(`/classical-albums/compositions`);
                           }
                         }}
                         className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 underline cursor-pointer transition-colors"

@@ -116,7 +116,7 @@ export default function CompositionSearch({
   return (
     <div className={className}>
       {showComposerSelect && (
-        <div className={showLabels ? "mb-4" : ""}>
+        <div className={`${showLabels ? "mb-4" : ""} flex-1`}>
           {showLabels && (
             <label className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
               작곡가 <span className="text-red-500">*</span>
@@ -127,7 +127,7 @@ export default function CompositionSearch({
               value={selectedComposerId}
               onChange={(e) => handleComposerChange(parseInt(e.target.value))}
               disabled={disabled}
-              className={`${showLabels ? 'w-full' : 'min-w-[200px]'} rounded-md border border-gray-300 bg-white px-4 py-2.5 pr-10 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed`}
+              className="w-full rounded-md border border-gray-300 bg-white px-4 py-2.5 pr-10 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <option value={0}>작곡가 선택</option>
               {composers.map((composer) => (
@@ -145,7 +145,7 @@ export default function CompositionSearch({
         </div>
       )}
 
-      <div className={showLabels ? "" : "relative min-w-[800px]"}>
+      <div className="relative flex-1">
         {showLabels && (
           <label className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
             작곡 <span className="text-red-500">*</span>
@@ -159,7 +159,7 @@ export default function CompositionSearch({
             <button
               type="button"
               onClick={handleClear}
-              className="text-red-500 hover:text-red-600 font-bold text-xl leading-none"
+              className="text-red-500 hover:text-red-600 font-bold text-xl leading-none flex-shrink-0"
               title="선택 취소"
             >
               ×
