@@ -12,9 +12,11 @@ import ErrorAlert from "@/components/common/ErrorAlert";
 import SearchInput from "@/components/common/SearchInput";
 import FormModal from "@/components/common/FormModal";
 import FormInput from "@/components/common/FormInput";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function ComposersPage() {
   const router = useRouter();
+  const { t } = useLanguage();
   const [composers, setComposers] = useState<Composer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -55,7 +57,7 @@ export default function ComposersPage() {
       setComposers(data);
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "작곡가 목록을 불러오는데 실패했습니다");
+      setError(err instanceof Error ? err.message : t("errorLoadingComposers"));
     } finally {
       if (isInitialLoad) {
         setLoading(false);
@@ -115,13 +117,13 @@ export default function ComposersPage() {
 
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      setError("이미지 크기는 5MB 이하여야 합니다");
+      setError(t("errorImageTooLarge"));
       return;
     }
 
     // Validate file type
     if (!file.type.startsWith("image/")) {
-      setError("이미지 파일을 선택해주세요");
+      setError(t("errorInvalidImageType"));
       return;
     }
 
@@ -132,7 +134,7 @@ export default function ComposersPage() {
       setImagePreview(`http://localhost:8000${result.image_url}`);
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "이미지 업로드에 실패했습니다");
+      setError(err instanceof Error ? err.message : t("errorUploadFailed"));
     } finally {
       setUploading(false);
     }
@@ -160,12 +162,12 @@ export default function ComposersPage() {
       await loadComposers();
       handleCloseModal();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "작곡가 저장에 실패했습니다");
+      setError(err instanceof Error ? err.message : t("errorSavingComposer"));
     }
   };
 
   const handleDelete = async (id: number, name: string) => {
-    if (!confirm(`"${name}"을(를) 삭제하시겠습니까?`)) {
+    if (!confirm(t("deleteConfirmMessage").replace("{type}", name))) {
       return;
     }
 
@@ -173,21 +175,21 @@ export default function ComposersPage() {
       await apiClient.deleteComposer(id);
       await loadComposers();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "작곡가 삭제에 실패했습니다");
+      setError(err instanceof Error ? err.message : t("errorDeletingComposer"));
     }
   };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-lg">Loading...</div>
+        <div className="text-lg">{t("loading")}</div>
       </div>
     );
   }
 
   return (
     <div>
-      <PageBreadcrumb pageTitle="작곡가" />
+      <PageBreadcrumb pageTitle={t("composers")} />
 
       {/* Error Message */}
       <ErrorAlert message={error} onClose={() => setError(null)} />
@@ -200,14 +202,14 @@ export default function ComposersPage() {
               value={searchQuery}
               onChange={setSearchQuery}
               onSearch={handleSearch}
-              placeholder="검색..."
+              placeholder={t("search") + "..."}
             />
             <button
               onClick={() => handleOpenModal()}
               className="inline-flex items-center justify-center gap-2 rounded-md bg-brand-500 px-3 py-2 text-center text-sm font-medium text-white hover:bg-brand-600 whitespace-nowrap"
             >
               <PlusIcon className="w-4 h-4" />
-              작곡가 추가
+              {t("addComposer")}
             </button>
           </div>
         }
@@ -218,19 +220,19 @@ export default function ComposersPage() {
             <thead>
               <tr className="border-b border-gray-200 bg-gray-50 text-left dark:border-gray-800 dark:bg-gray-800">
                 <th className="px-4 py-3 font-bold text-gray-500 text-theme-xs dark:text-gray-400">
-                  이름
+                  {t("name")}
                 </th>
                 <th className="px-4 py-3 font-bold text-gray-500 text-theme-xs dark:text-gray-400">
-                  생애
+                  {t("life")}
                 </th>
                 <th className="px-4 py-3 font-bold text-gray-500 text-theme-xs dark:text-gray-400 text-center">
-                  국적
+                  {t("nationality")}
                 </th>
                 <th className="px-4 py-3 font-bold text-gray-500 text-theme-xs dark:text-gray-400 text-center">
-                  작곡
+                  {t("compositions")}
                 </th>
                 <th className="px-4 py-3 font-bold text-gray-500 text-theme-xs dark:text-gray-400 w-32 text-center">
-                  작업
+                  {t("actions")}
                 </th>
               </tr>
             </thead>
@@ -242,8 +244,8 @@ export default function ComposersPage() {
                     className="px-4 py-8 text-center text-gray-500 text-theme-sm dark:text-gray-400"
                   >
                     {searchQuery
-                      ? "No composers found matching your search."
-                      : "No composers found. Click \"Add Composer\" to create one."}
+                      ? t("noSearchResults")
+                      : t("noComposersFound")}
                   </td>
                 </tr>
               ) : (
@@ -287,7 +289,7 @@ export default function ComposersPage() {
                           }
                         }}
                         className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 underline cursor-pointer transition-colors"
-                        title={`View compositions by ${composer.name}`}
+                        title={t("viewCompositionsBy").replace("{name}", composer.name)}
                         style={{ fontFamily: 'monospace' }}
                       >
                         {composer.composition_count}
@@ -298,14 +300,14 @@ export default function ComposersPage() {
                         <button
                           onClick={() => handleOpenModal(composer)}
                           className="rounded p-2.5 text-brand-500 hover:bg-gray-100 dark:hover:bg-gray-800"
-                          title="Edit"
+                          title={t("edit")}
                         >
                           <PencilIcon className="w-5 h-5" />
                         </button>
                         <button
                           onClick={() => handleDelete(composer.id, composer.name)}
                           className="rounded p-2.5 text-red-500 hover:bg-gray-100 dark:hover:bg-gray-800"
-                          title="Delete"
+                          title={t("delete")}
                         >
                           <TrashBinIcon className="w-5 h-5" />
                         </button>
@@ -323,14 +325,14 @@ export default function ComposersPage() {
       <FormModal
         isOpen={isModalOpen}
         onClose={handleCloseModal}
-        title={editingComposer ? "작곡가 수정" : "작곡가 추가"}
+        title={editingComposer ? t("editComposer") : t("addComposer")}
         onSubmit={handleSubmit}
-        submitLabel={editingComposer ? "수정" : "추가"}
+        submitLabel={editingComposer ? t("edit") : t("add")}
         maxWidth="md"
       >
         <div>
           <label className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
-            프로필 이미지
+            {t("profileImage")}
           </label>
           <div className="flex items-center gap-4">
             <div className="relative w-20 h-20 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-700 flex-shrink-0">
@@ -349,22 +351,29 @@ export default function ComposersPage() {
               )}
             </div>
             <div className="flex-1">
+              <label
+                htmlFor="composer-image-upload"
+                className={`inline-flex items-center justify-center gap-2 rounded-md bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600 cursor-pointer ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                {uploading ? t("uploading") : t("uploadImage")}
+              </label>
               <input
+                id="composer-image-upload"
                 type="file"
                 accept="image/*"
                 onChange={handleImageUpload}
                 disabled={uploading}
-                className="w-full text-sm text-gray-900 dark:text-white file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-brand-500 file:text-white hover:file:bg-brand-600 file:cursor-pointer disabled:opacity-50"
+                className="hidden"
               />
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                {uploading ? "업로드 중..." : "PNG, JPG, WEBP 최대 5MB"}
+              <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                {t("imageRequirements")}
               </p>
             </div>
           </div>
         </div>
 
         <FormInput
-          label="전체 이름"
+          label={t("fullName")}
           type="text"
           required
           value={formData.full_name}
@@ -372,7 +381,7 @@ export default function ComposersPage() {
         />
 
         <FormInput
-          label="이름"
+          label={t("name")}
           type="text"
           required
           value={formData.name}
@@ -381,14 +390,14 @@ export default function ComposersPage() {
 
         <div className="grid grid-cols-2 gap-4">
           <FormInput
-            label="출생년도"
+            label={t("birthYear")}
             type="number"
             value={formData.birth_year || ""}
             onChange={(value) => setFormData({ ...formData, birth_year: value ? Number(value) : null })}
           />
 
           <FormInput
-            label="사망년도"
+            label={t("deathYear")}
             type="number"
             value={formData.death_year || ""}
             onChange={(value) => setFormData({ ...formData, death_year: value ? Number(value) : null })}
@@ -396,7 +405,7 @@ export default function ComposersPage() {
         </div>
 
         <FormInput
-          label="국적"
+          label={t("nationality")}
           type="text"
           value={formData.nationality || ""}
           onChange={(value) => setFormData({ ...formData, nationality: value as string })}

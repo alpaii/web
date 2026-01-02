@@ -9,6 +9,7 @@ import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import ComponentCard from "@/components/common/ComponentCard";
 import ArtistDisplay from "@/components/common/ArtistDisplay";
 import CompositionDisplay from "@/components/common/CompositionDisplay";
+import { useLanguage } from "@/context/LanguageContext";
 
 const STORAGE_KEY = 'albums_page_state';
 
@@ -18,6 +19,7 @@ interface PageState {
 }
 
 export default function AlbumsPage() {
+  const { t } = useLanguage();
   const [albums, setAlbums] = useState<Album[]>([]);
   const [recordings, setRecordings] = useState<Recording[]>([]);
   const [composers, setComposers] = useState<Composer[]>([]);
@@ -76,7 +78,7 @@ export default function AlbumsPage() {
 
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "데이터를 불러오는데 실패했습니다");
+      setError(err instanceof Error ? err.message : t("errorLoadingAlbums"));
     } finally {
       setLoading(false);
     }
@@ -99,7 +101,7 @@ export default function AlbumsPage() {
         albums: albumsData
       });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "앨범 목록을 불러오는데 실패했습니다");
+      setError(err instanceof Error ? err.message : t("errorLoadingAlbums"));
     }
   };
 
@@ -135,7 +137,7 @@ export default function AlbumsPage() {
   
 
   const handleDelete = async (id: number, albumType: string) => {
-    if (!confirm(`${albumType} 앨범 (ID: ${id})을(를) 삭제하시겠습니까?`)) {
+    if (!confirm(t("deleteConfirmMessage").replace("{type}", `${albumType} ${t("albums")} (ID: ${id})`))) {
       return;
     }
 
@@ -143,7 +145,7 @@ export default function AlbumsPage() {
       await apiClient.deleteAlbum(id);
       await loadData();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "앨범 삭제에 실패했습니다");
+      setError(err instanceof Error ? err.message : t("errorDeletingAlbum"));
     }
   };
 
@@ -157,20 +159,20 @@ export default function AlbumsPage() {
 
   return (
     <div>
-      <PageBreadcrumb pageTitle="앨범" />
+      <PageBreadcrumb pageTitle={t("albums")} />
 
       {/* Error Message */}
       {error && (
         <div className="mb-4 rounded-md bg-red-50 p-4 text-red-800 dark:bg-red-900/20 dark:text-red-400 border border-red-200 dark:border-red-800">
           <div className="flex items-start justify-between gap-3">
             <p className="flex-1">
-              <span className="font-semibold">오류:</span> {error}
+              <span className="font-semibold">{t("error")}:</span> {error}
             </p>
             <button
               onClick={() => setError(null)}
               className="flex-shrink-0 rounded-md px-2 py-1 bg-red-200 text-red-700 hover:bg-red-300 dark:bg-red-800 dark:text-red-200 dark:hover:bg-red-700 transition-colors font-bold text-lg leading-none"
-              title="닫기"
-              aria-label="오류 메시지 닫기"
+              title={t("close")}
+              aria-label={t("closeErrorMessage")}
             >
               ×
             </button>
@@ -187,7 +189,7 @@ export default function AlbumsPage() {
               className="inline-flex items-center justify-center gap-2 rounded-md bg-brand-500 px-3 py-2 text-center text-sm font-medium text-white hover:bg-brand-600 whitespace-nowrap"
             >
               <PlusIcon className="w-4 h-4" />
-              앨범 추가
+              {t("addAlbum")}
             </Link>
           </div>
         }
@@ -198,25 +200,25 @@ export default function AlbumsPage() {
             <thead>
               <tr className="border-b border-gray-200 bg-gray-50 text-left dark:border-gray-800 dark:bg-gray-800">
                 <th className="px-4 py-3 font-bold text-gray-500 text-theme-xs dark:text-gray-400 text-center">
-                  앨범
+                  {t("albums")}
                 </th>
                 <th className="px-4 py-3 font-bold text-gray-500 text-theme-xs dark:text-gray-400 text-center">
-                  링크
+                  {t("links")}
                 </th>
                 <th className="px-4 py-3 font-bold text-gray-500 text-theme-xs dark:text-gray-400">
-                  작곡가
+                  {t("composer")}
                 </th>
                 <th className="px-4 py-3 font-bold text-gray-500 text-theme-xs dark:text-gray-400">
-                  작곡
+                  {t("composition")}
                 </th>
                 <th className="px-4 py-3 font-bold text-gray-500 text-theme-xs dark:text-gray-400 text-center">
-                  녹음년도
+                  {t("year")}
                 </th>
                 <th className="px-4 py-3 font-bold text-gray-500 text-theme-xs dark:text-gray-400">
-                  아티스트
+                  {t("artists")}
                 </th>
                 <th className="px-4 py-3 font-bold text-gray-500 text-theme-xs dark:text-gray-400 w-32 text-center">
-                  작업
+                  {t("actions")}
                 </th>
               </tr>
             </thead>
@@ -238,8 +240,8 @@ export default function AlbumsPage() {
                       className="px-4 py-8 text-center text-gray-500 text-theme-sm dark:text-gray-400"
                     >
                       {selectedRecordingId
-                        ? "선택한 녹음이 포함된 앨범이 없습니다."
-                        : "녹음 페이지에서 앨범 개수를 클릭하면 해당 녹음이 포함된 앨범 목록을 볼 수 있습니다."}
+                        ? t("noAlbumsWithRecording")
+                        : t("clickRecordingCountToViewAlbums")}
                     </td>
                   </tr>
                 ) : (
@@ -273,7 +275,7 @@ export default function AlbumsPage() {
                             {getPrimaryImage(album) ? (
                               <Image
                                 src={getPrimaryImage(album)!}
-                                alt={`${album.album_type} 앨범 커버`}
+                                alt={t("albumCover").replace("{type}", album.album_type)}
                                 fill
                                 className="object-cover"
                                 sizes="64px"
@@ -339,21 +341,21 @@ export default function AlbumsPage() {
                             </div>
                           </td>
                           <td className="px-4 py-3 text-gray-400 dark:text-gray-500 italic text-theme-sm" colSpan={4}>
-                            녹음 없음
+                            {t("noRecording")}
                           </td>
                           <td className="px-4 py-3 w-32" rowSpan={Math.max(1, album.recordings.length) + (album.memo ? 1 : 0)}>
                             <div className="flex items-center justify-center gap-2">
                               <Link
                                 href={`/classical-albums/albums/${album.id}/edit`}
                                 className="rounded p-2.5 text-brand-500 hover:bg-gray-100 dark:hover:bg-gray-800"
-                                title="수정"
+                                title={t("edit")}
                               >
                                 <PencilIcon className="w-5 h-5" />
                               </Link>
                               <button
                                 onClick={() => handleDelete(album.id, album.album_type)}
                                 className="rounded p-2.5 text-red-500 hover:bg-gray-100 dark:hover:bg-gray-800"
-                                title="삭제"
+                                title={t("delete")}
                               >
                                 <TrashBinIcon className="w-5 h-5" />
                               </button>
@@ -431,14 +433,14 @@ export default function AlbumsPage() {
                               <Link
                                 href={`/classical-albums/albums/${album.id}/edit`}
                                 className="rounded p-2.5 text-brand-500 hover:bg-gray-100 dark:hover:bg-gray-800"
-                                title="수정"
+                                title={t("edit")}
                               >
                                 <PencilIcon className="w-5 h-5" />
                               </Link>
                               <button
                                 onClick={() => handleDelete(album.id, album.album_type)}
                                 className="rounded p-2.5 text-red-500 hover:bg-gray-100 dark:hover:bg-gray-800"
-                                title="삭제"
+                                title={t("delete")}
                               >
                                 <TrashBinIcon className="w-5 h-5" />
                               </button>

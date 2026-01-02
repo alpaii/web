@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Composition, Composer } from "@/lib/api";
+import { useLanguage } from "@/context/LanguageContext";
 
 interface CompositionSearchProps {
   composers: Composer[];
@@ -26,12 +27,13 @@ export default function CompositionSearch({
   onComposerChange,
   onCompositionSelect,
   onClear,
-  placeholder = "2글자 이상 입력하세요...",
+  placeholder,
   showComposerSelect = true,
   showLabels = true,
   disabled = false,
   className = "",
 }: CompositionSearchProps) {
+  const { t } = useLanguage();
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredCompositions, setFilteredCompositions] = useState<Composition[]>([]);
   const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
@@ -119,7 +121,7 @@ export default function CompositionSearch({
         <div className={`${showLabels ? "mb-4" : ""} flex-1`}>
           {showLabels && (
             <label className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
-              작곡가 <span className="text-red-500">*</span>
+              {t("composer")} <span className="text-red-500">*</span>
             </label>
           )}
           <div className="relative">
@@ -129,7 +131,7 @@ export default function CompositionSearch({
               disabled={disabled}
               className="w-full rounded-md border border-gray-300 bg-white px-4 py-2.5 pr-10 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <option value={0}>작곡가 선택</option>
+              <option value={0}>{t("selectComposer")}</option>
               {composers.map((composer) => (
                 <option key={composer.id} value={composer.id}>
                   {composer.name}
@@ -148,7 +150,7 @@ export default function CompositionSearch({
       <div className="relative flex-1">
         {showLabels && (
           <label className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
-            작곡 <span className="text-red-500">*</span>
+            {t("composition")} <span className="text-red-500">*</span>
           </label>
         )}
         {selectedCompositionId ? (
@@ -160,7 +162,7 @@ export default function CompositionSearch({
               type="button"
               onClick={handleClear}
               className="text-red-500 hover:text-red-600 font-bold text-xl leading-none flex-shrink-0"
-              title="선택 취소"
+              title={t("clearSelection")}
             >
               ×
             </button>
@@ -173,7 +175,7 @@ export default function CompositionSearch({
               onChange={(e) => handleSearchChange(e.target.value)}
               onKeyDown={handleKeyDown}
               disabled={!selectedComposerId || disabled}
-              placeholder={selectedComposerId ? placeholder : "먼저 작곡가를 선택하세요"}
+              placeholder={selectedComposerId ? (placeholder || t("artistSearchPlaceholder")) : t("selectComposer")}
               className="w-full rounded-md border border-gray-300 bg-white px-4 py-2.5 pr-10 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
             />
             {searchQuery && (
@@ -185,7 +187,7 @@ export default function CompositionSearch({
                   setHighlightedIndex(-1);
                 }}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 text-xl font-bold leading-none"
-                title="검색 취소"
+                title={t("cancelSearch")}
               >
                 ×
               </button>

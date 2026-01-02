@@ -8,6 +8,7 @@ import ComponentCard from "@/components/common/ComponentCard";
 import CompositionDisplay from "@/components/common/CompositionDisplay";
 import ArtistDisplay from "@/components/common/ArtistDisplay";
 import RecordingSearch from "@/components/common/RecordingSearch";
+import { useLanguage } from "@/context/LanguageContext";
 
 interface AlbumFormProps {
   mode: 'create' | 'edit';
@@ -16,6 +17,7 @@ interface AlbumFormProps {
 
 export default function AlbumForm({ mode, albumId }: AlbumFormProps) {
   const router = useRouter();
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -103,7 +105,7 @@ export default function AlbumForm({ mode, albumId }: AlbumFormProps) {
 
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "데이터를 불러오는데 실패했습니다");
+      setError(err instanceof Error ? err.message : t("errorLoadingData"));
     } finally {
       setLoading(false);
     }
@@ -199,7 +201,7 @@ export default function AlbumForm({ mode, albumId }: AlbumFormProps) {
       }));
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "이미지 업로드에 실패했습니다");
+      setError(err instanceof Error ? err.message : t("errorUploadFailed"));
     } finally {
       setUploading(false);
     }
@@ -258,12 +260,12 @@ export default function AlbumForm({ mode, albumId }: AlbumFormProps) {
     e.preventDefault();
 
     if (!formData.album_type) {
-      setError("앨범 유형을 선택해주세요");
+      setError(t("errorSelectAlbumType"));
       return;
     }
 
     if (!formData.recording_ids || formData.recording_ids.length === 0) {
-      setError("최소 한 개의 녹음을 선택해주세요");
+      setError(t("errorSelectAtLeastOneRecording"));
       return;
     }
 
@@ -275,14 +277,14 @@ export default function AlbumForm({ mode, albumId }: AlbumFormProps) {
       }
       router.push('/classical-albums/albums');
     } catch (err) {
-      setError(err instanceof Error ? err.message : `앨범 ${mode === 'edit' ? '수정' : '저장'}에 실패했습니다`);
+      setError(err instanceof Error ? err.message : mode === 'edit' ? t("errorSavingAlbumEdit") : t("errorSavingAlbumCreate"));
     }
   };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-lg">Loading...</div>
+        <div className="text-lg">{t("loading")}</div>
       </div>
     );
   }
@@ -296,7 +298,7 @@ export default function AlbumForm({ mode, albumId }: AlbumFormProps) {
             onClick={() => setError(null)}
             className="mt-2 text-sm underline hover:no-underline"
           >
-            닫기
+            {t("close")}
           </button>
         </div>
       )}
@@ -306,7 +308,7 @@ export default function AlbumForm({ mode, albumId }: AlbumFormProps) {
           {/* 앨범 유형 */}
           <div>
             <label className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
-              유형 <span className="text-red-500">*</span>
+              {t("type")} <span className="text-red-500">*</span>
             </label>
             <div className="flex gap-6">
               <label className="flex items-center gap-2 cursor-pointer">
@@ -373,14 +375,14 @@ export default function AlbumForm({ mode, albumId }: AlbumFormProps) {
           <div>
             <div className="flex items-center justify-between mb-2">
               <label className="block text-sm font-medium text-gray-900 dark:text-white">
-                사용자 URL
+                {t("customUrls")}
               </label>
               <button
                 type="button"
                 onClick={handleAddCustomUrl}
                 className="px-3 py-1 text-sm bg-brand-500 text-white rounded hover:bg-brand-600"
               >
-                URL 추가
+                {t("addUrl")}
               </button>
             </div>
 
@@ -392,7 +394,7 @@ export default function AlbumForm({ mode, albumId }: AlbumFormProps) {
                       type="text"
                       value={customUrl.url_name}
                       onChange={(e) => handleCustomUrlChange(index, 'url_name', e.target.value)}
-                      placeholder="URL 이름"
+                      placeholder={t("urlNamePlaceholder")}
                       className="w-1/6 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-1.5 text-sm text-gray-900 dark:text-white focus:border-brand-500 focus:outline-none"
                     />
                     <input
@@ -406,7 +408,7 @@ export default function AlbumForm({ mode, albumId }: AlbumFormProps) {
                       type="button"
                       onClick={() => handleRemoveCustomUrl(index)}
                       className="w-6 h-6 flex items-center justify-center border border-red-500 text-red-500 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-lg font-bold leading-none flex-shrink-0"
-                      title="제거"
+                      title={t("remove")}
                     >
                       ×
                     </button>
@@ -414,7 +416,7 @@ export default function AlbumForm({ mode, albumId }: AlbumFormProps) {
                 ))
               ) : (
                 <div className="text-sm text-gray-500 dark:text-gray-400 text-center py-2">
-                  URL 추가 버튼을 클릭하여 사용자 URL을 추가하세요
+                  {t("addUrlInstruction")}
                 </div>
               )}
             </div>
@@ -423,14 +425,14 @@ export default function AlbumForm({ mode, albumId }: AlbumFormProps) {
           {/* 메모 */}
           <div>
             <label htmlFor="memo" className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
-              메모
+              {t("memo")}
             </label>
             <textarea
               id="memo"
               value={formData.memo || ""}
               onChange={(e) => setFormData(prev => ({ ...prev, memo: e.target.value || null }))}
               className="w-full rounded-md border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-              placeholder="메모를 입력하세요..."
+              placeholder={t("memoPlaceholder")}
               rows={6}
             />
           </div>
@@ -438,19 +440,28 @@ export default function AlbumForm({ mode, albumId }: AlbumFormProps) {
           {/* 이미지 업로드 */}
           <div>
             <label className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
-              커버 이미지
+              {t("coverImage")}
             </label>
-            <input
-              type="file"
-              accept="image/*"
-              multiple
-              onChange={handleImageUpload}
-              disabled={uploading}
-              className="w-full text-sm text-gray-900 dark:text-white file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-brand-500 file:text-white hover:file:bg-brand-600 file:cursor-pointer disabled:opacity-50"
-            />
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              {uploading ? "업로드 중..." : "하나 이상의 이미지를 선택하세요"}
-            </p>
+            <div className="mb-3">
+              <label
+                htmlFor="album-image-upload"
+                className={`inline-flex items-center justify-center gap-2 rounded-md bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600 cursor-pointer ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                {uploading ? t("uploading") : t("uploadImage")}
+              </label>
+              <input
+                id="album-image-upload"
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handleImageUpload}
+                disabled={uploading}
+                className="hidden"
+              />
+              <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                {t("selectOneOrMoreImages")}
+              </p>
+            </div>
 
             {formData.image_urls && formData.image_urls.length > 0 && (
               <div className="mt-3 flex flex-wrap gap-2">
@@ -478,7 +489,7 @@ export default function AlbumForm({ mode, albumId }: AlbumFormProps) {
                             ? 'bg-brand-500 text-white'
                             : 'bg-white/80 text-gray-700 hover:bg-white border border-gray-300'
                         }`}
-                        title="대표 이미지로 설정"
+                        title={t("setPrimaryImage")}
                       >
                         ★
                       </button>
@@ -486,7 +497,7 @@ export default function AlbumForm({ mode, albumId }: AlbumFormProps) {
                         type="button"
                         onClick={() => handleRemoveImage(index)}
                         className="w-5 h-5 p-0.5 border border-red-500 text-red-500 rounded text-xs leading-none hover:bg-red-50 flex items-center justify-center"
-                        title="제거"
+                        title={t("remove")}
                       >
                         ×
                       </button>
@@ -500,7 +511,7 @@ export default function AlbumForm({ mode, albumId }: AlbumFormProps) {
           {/* 녹음 선택 */}
           <div>
             <label className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
-              녹음 선택 <span className="text-red-500">*</span>
+              {t("selectRecordings")} <span className="text-red-500">*</span>
             </label>
 
             <RecordingSearch
@@ -516,18 +527,18 @@ export default function AlbumForm({ mode, albumId }: AlbumFormProps) {
             {formData.recording_ids && formData.recording_ids.length > 0 && (
               <div className="mt-4 p-4 border border-gray-300 dark:border-gray-700 rounded-md">
                 <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-3">
-                  선택된 녹음 ({formData.recording_ids.length}개)
+                  {t("selectedRecordingsCount").replace("{count}", String(formData.recording_ids.length))}
                 </h4>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead className="bg-gray-50 dark:bg-gray-800">
                       <tr>
-                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400">순서</th>
-                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400">작곡가</th>
-                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400">작곡</th>
-                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400">녹음년도</th>
-                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400">아티스트</th>
-                        <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-400">작업</th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400">{t("order")}</th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400">{t("composer")}</th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400">{t("composition")}</th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400">{t("year")}</th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400">{t("artists")}</th>
+                        <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-400">{t("actions")}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -578,7 +589,7 @@ export default function AlbumForm({ mode, albumId }: AlbumFormProps) {
                                 onClick={() => handleRecordingRemove(recordingId)}
                                 className="px-2 py-1 border border-red-500 text-red-500 rounded hover:bg-red-50 text-xs"
                               >
-                                제거
+                                {t("remove")}
                               </button>
                             </td>
                           </tr>
@@ -598,13 +609,13 @@ export default function AlbumForm({ mode, albumId }: AlbumFormProps) {
               onClick={() => router.push('/classical-albums/albums')}
               className="rounded-md border border-gray-300 bg-white px-4 py-2 text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
             >
-              취소
+              {t("cancel")}
             </button>
             <button
               type="submit"
               className="rounded-md bg-brand-500 px-4 py-2 text-white hover:bg-brand-600"
             >
-              {mode === 'edit' ? '수정' : '추가'}
+              {mode === 'edit' ? t("edit") : t("add")}
             </button>
           </div>
         </form>

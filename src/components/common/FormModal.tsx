@@ -1,6 +1,7 @@
 "use client";
 
 import React from 'react';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface FormModalProps {
   isOpen: boolean;
@@ -28,12 +29,14 @@ export default function FormModal({
   onClose,
   title,
   onSubmit,
-  submitLabel = '저장',
-  cancelLabel = '취소',
+  submitLabel,
+  cancelLabel,
   children,
   maxWidth = 'xl',
   maxHeight,
 }: FormModalProps) {
+  const { t } = useLanguage();
+
   if (!isOpen) return null;
 
   return (
@@ -53,7 +56,7 @@ export default function FormModal({
           <button
             onClick={onClose}
             className="rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800 dark:hover:text-gray-300"
-            title="닫기"
+            title={t("close")}
           >
             <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -74,13 +77,13 @@ export default function FormModal({
               onClick={onClose}
               className="rounded-md bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
             >
-              {cancelLabel}
+              {cancelLabel || t("cancel")}
             </button>
             <button
               type="submit"
               className="rounded-md bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600"
             >
-              {submitLabel}
+              {submitLabel || t("save")}
             </button>
           </div>
         </form>

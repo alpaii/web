@@ -10,6 +10,7 @@ import CompositionSearch from "@/components/common/CompositionSearch";
 import ErrorAlert from "@/components/common/ErrorAlert";
 import ArtistDisplay from "@/components/common/ArtistDisplay";
 import CompositionDisplay from "@/components/common/CompositionDisplay";
+import { useLanguage } from "@/context/LanguageContext";
 
 const STORAGE_KEY = 'recordings_page_state';
 
@@ -22,6 +23,7 @@ interface PageState {
 
 export default function RecordingsPage() {
   const router = useRouter();
+  const { t } = useLanguage();
   const [recordings, setRecordings] = useState<Recording[]>([]);
   const [compositions, setCompositions] = useState<Composition[]>([]);
   const [composers, setComposers] = useState<Composer[]>([]);
@@ -113,7 +115,7 @@ export default function RecordingsPage() {
 
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "데이터를 불러오는데 실패했습니다");
+      setError(err instanceof Error ? err.message : t("errorLoadingRecordings"));
     } finally {
       setLoading(false);
     }
@@ -145,7 +147,7 @@ export default function RecordingsPage() {
         recordings: data
       });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "녹음 목록을 불러오는데 실패했습니다");
+      setError(err instanceof Error ? err.message : t("errorLoadingRecordings"));
     }
   };
 
@@ -479,7 +481,7 @@ export default function RecordingsPage() {
     e.preventDefault();
 
     if (formData.artist_ids.length === 0) {
-      setError("최소 한 명의 아티스트를 선택해주세요");
+      setError(t("errorSelectAtLeastOneArtist"));
       return;
     }
 
@@ -499,12 +501,12 @@ export default function RecordingsPage() {
       await loadRecordings(selectedCompositionId, selectedCompositionId ? undefined : filterComposerId, filterSelectedArtistId);
       handleCloseModal();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "녹음 저장에 실패했습니다");
+      setError(err instanceof Error ? err.message : t("errorSavingRecording"));
     }
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm("녹음을 삭제하시겠습니까?")) {
+    if (!confirm(t("deleteRecordingConfirm"))) {
       return;
     }
 
@@ -512,7 +514,7 @@ export default function RecordingsPage() {
       await apiClient.deleteRecording(id);
       await loadRecordings(selectedCompositionId, selectedCompositionId ? undefined : filterComposerId, filterSelectedArtistId);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "녹음 삭제에 실패했습니다");
+      setError(err instanceof Error ? err.message : t("errorDeletingRecording"));
     }
   };
 
@@ -526,7 +528,7 @@ export default function RecordingsPage() {
 
   return (
     <div>
-      <PageBreadcrumb pageTitle="녹음" />
+      <PageBreadcrumb pageTitle={t("recordings")} />
 
       {/* Error Message */}
       <ErrorAlert message={error} onClose={() => setError(null)} />
@@ -560,7 +562,7 @@ export default function RecordingsPage() {
                       type="button"
                       onClick={handleFilterArtistClear}
                       className="text-red-500 hover:text-red-600 font-bold text-xl leading-none flex-shrink-0"
-                      title="선택 취소"
+                      title={t("clearSelection")}
                     >
                       ×
                     </button>
@@ -572,7 +574,7 @@ export default function RecordingsPage() {
                       value={filterArtistSearchQuery}
                       onChange={(e) => handleFilterArtistSearchChange(e.target.value)}
                       onKeyDown={handleFilterArtistKeyDown}
-                      placeholder="아티스트 검색 (2글자 이상)..."
+                      placeholder={t("searchArtist")}
                       className="w-full rounded-md border border-gray-300 bg-white px-4 py-2.5 pr-10 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                     />
                     {filterArtistSearchQuery && (
@@ -584,7 +586,7 @@ export default function RecordingsPage() {
                           setFilterHighlightedArtistIndex(-1);
                         }}
                         className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 text-xl font-bold leading-none"
-                        title="검색 취소"
+                        title={t("cancelSearch")}
                       >
                         ×
                       </button>
@@ -620,7 +622,7 @@ export default function RecordingsPage() {
               className="inline-flex items-center justify-center gap-2 rounded-md bg-brand-500 px-3 py-2 text-center text-sm font-medium text-white hover:bg-brand-600 whitespace-nowrap"
             >
               <PlusIcon className="w-4 h-4" />
-              녹음 추가
+              {t("addRecording")}
             </button>
           </div>
         }
@@ -631,22 +633,22 @@ export default function RecordingsPage() {
             <thead>
               <tr className="border-b border-gray-200 bg-gray-50 text-left dark:border-gray-800 dark:bg-gray-800">
                 <th className="px-4 py-3 font-bold text-gray-500 text-theme-xs dark:text-gray-400">
-                  작곡가
+                  {t("composer")}
                 </th>
                 <th className="px-4 py-3 font-bold text-gray-500 text-theme-xs dark:text-gray-400">
-                  작곡
+                  {t("composition")}
                 </th>
                 <th className="px-4 py-3 font-bold text-gray-500 text-theme-xs dark:text-gray-400 text-center">
-                  녹음년도
+                  {t("year")}
                 </th>
                 <th className="px-4 py-3 font-bold text-gray-500 text-theme-xs dark:text-gray-400">
-                  아티스트
+                  {t("artists")}
                 </th>
                 <th className="px-4 py-3 font-bold text-gray-500 text-theme-xs dark:text-gray-400 text-center">
-                  앨범
+                  {t("albums")}
                 </th>
                 <th className="px-4 py-3 font-bold text-gray-500 text-theme-xs dark:text-gray-400 w-32 text-center">
-                  작업
+                  {t("actions")}
                 </th>
               </tr>
             </thead>
@@ -658,8 +660,8 @@ export default function RecordingsPage() {
                     className="px-4 py-8 text-center text-gray-500 text-theme-sm dark:text-gray-400"
                   >
                     {selectedCompositionId || filterSelectedArtistId
-                      ? "검색 조건에 맞는 녹음이 없습니다."
-                      : "작곡을 선택하거나 아티스트를 선택하면 녹음을 볼 수 있습니다."}
+                      ? t("noRecordingsWithFilter")
+                      : t("selectCompositionOrArtistToViewRecordings")}
                   </td>
                 </tr>
               ) : (
@@ -703,14 +705,14 @@ export default function RecordingsPage() {
                         <button
                           onClick={() => handleOpenModal(recording)}
                           className="rounded p-2.5 text-brand-500 hover:bg-gray-100 dark:hover:bg-gray-800"
-                          title="수정"
+                          title={t("edit")}
                         >
                           <PencilIcon className="w-5 h-5" />
                         </button>
                         <button
                           onClick={() => handleDelete(recording.id)}
                           className="rounded p-2.5 text-red-500 hover:bg-gray-100 dark:hover:bg-gray-800"
-                          title="삭제"
+                          title={t("delete")}
                         >
                           <TrashBinIcon className="w-5 h-5" />
                         </button>
@@ -730,7 +732,7 @@ export default function RecordingsPage() {
           <div className="relative w-full max-w-2xl rounded-lg bg-white p-6 shadow-lg dark:bg-gray-900 max-h-[90vh] overflow-y-auto">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-xl font-bold text-gray-900 dark:text-white">
-                {editingRecording ? "녹음 수정" : "녹음 추가"}
+                {editingRecording ? t("editRecording") : t("addRecording")}
               </h3>
               <button
                 onClick={handleCloseModal}
@@ -750,12 +752,12 @@ export default function RecordingsPage() {
                 onCompositionSelect={handleModalCompositionSelect}
                 onClear={handleModalCompositionClear}
                 showComposerSelect={true}
-                placeholder="Type at least 2 characters to search..."
+                placeholder={t("artistSearchPlaceholder")}
               />
 
               <div>
                 <label className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
-                  녹음년도
+                  {t("year")}
                 </label>
                 <input
                   type="number"
@@ -772,7 +774,7 @@ export default function RecordingsPage() {
 
               <div>
                 <label className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
-                  아티스트 <span className="text-red-500">*</span>
+                  {t("artists")} <span className="text-red-500">*</span>
                 </label>
 
                 {/* Artist Search Input */}
@@ -782,7 +784,7 @@ export default function RecordingsPage() {
                     value={artistSearchQuery}
                     onChange={(e) => handleArtistSearchChange(e.target.value)}
                     onKeyDown={handleArtistKeyDown}
-                    placeholder="2글자 이상 입력하세요..."
+                    placeholder={t("artistSearchPlaceholder")}
                     className="w-full rounded-md border border-gray-300 bg-white px-4 py-2.5 pr-10 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                   />
                   {artistSearchQuery && (
@@ -794,7 +796,7 @@ export default function RecordingsPage() {
                         setHighlightedArtistIndex(-1);
                       }}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 text-xl font-bold leading-none"
-                      title="검색 취소"
+                      title={t("cancelSearch")}
                     >
                       ×
                     </button>
@@ -824,7 +826,7 @@ export default function RecordingsPage() {
 
                 {/* Selected count message */}
                 <p className="mb-2 text-xs text-gray-500 dark:text-gray-400">
-                  {selectedArtists.length}명 선택됨
+                  {t("artistsSelected").replace("{count}", String(selectedArtists.length))}
                 </p>
 
                 {/* Selected Artists List */}
@@ -851,7 +853,7 @@ export default function RecordingsPage() {
                           type="button"
                           onClick={() => handleArtistRemove(artist.id)}
                           className="text-red-500 hover:text-red-600 font-bold text-xl leading-none"
-                          title="선택 취소"
+                          title={t("clearSelection")}
                         >
                           ×
                         </button>
@@ -867,13 +869,13 @@ export default function RecordingsPage() {
                   onClick={handleCloseModal}
                   className="rounded-md border border-gray-300 bg-white px-4 py-2 text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
                 >
-                  취소
+                  {t("cancel")}
                 </button>
                 <button
                   type="submit"
                   className="rounded-md bg-brand-500 px-4 py-2 text-white hover:bg-brand-600"
                 >
-                  {editingRecording ? "수정" : "추가"}
+                  {editingRecording ? t("edit") : t("add")}
                 </button>
               </div>
             </form>

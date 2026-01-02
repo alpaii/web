@@ -9,6 +9,7 @@ import ComponentCard from "@/components/common/ComponentCard";
 import ErrorAlert from "@/components/common/ErrorAlert";
 import SearchInput from "@/components/common/SearchInput";
 import ComposerSelect from "@/components/common/ComposerSelect";
+import { useLanguage } from "@/context/LanguageContext";
 
 const STORAGE_KEY = 'compositions_page_state';
 
@@ -20,6 +21,7 @@ interface PageState {
 
 export default function CompositionsPage() {
   const router = useRouter();
+  const { t } = useLanguage();
   const [compositions, setCompositions] = useState<Composition[]>([]);
   const [composers, setComposers] = useState<Composer[]>([]);
   const [loading, setLoading] = useState(true);
@@ -85,7 +87,7 @@ export default function CompositionsPage() {
       setComposers(sortedData);
     } catch (err) {
       console.error("Failed to load composers:", err);
-      setError("작곡가를 불러오지 못했습니다");
+      setError(t("errorLoadingComposers"));
     } finally {
       setLoading(false);
     }
@@ -114,7 +116,7 @@ export default function CompositionsPage() {
         compositions: data
       });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "작곡을 불러오지 못했습니다");
+      setError(err instanceof Error ? err.message : t("errorLoadingCompositions"));
     }
   };
 
@@ -177,7 +179,7 @@ export default function CompositionsPage() {
       await loadCompositions(selectedComposerId, searchQuery.trim() || undefined);
       handleCloseModal();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "작곡을 저장하지 못했습니다");
+      setError(err instanceof Error ? err.message : t("errorSavingComposition"));
     }
   };
 
@@ -191,7 +193,7 @@ export default function CompositionsPage() {
       await loadCompositions(selectedComposerId, searchQuery.trim() || undefined);
       setDeleteConfirmModal({ isOpen: false, id: 0, title: "" });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "작곡을 삭제하지 못했습니다");
+      setError(err instanceof Error ? err.message : t("errorDeletingComposition"));
       setDeleteConfirmModal({ isOpen: false, id: 0, title: "" });
     }
   };
@@ -203,14 +205,14 @@ export default function CompositionsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-lg">로딩 중...</div>
+        <div className="text-lg">{t("loading")}</div>
       </div>
     );
   }
 
   return (
     <div>
-      <PageBreadcrumb pageTitle="작곡" />
+      <PageBreadcrumb pageTitle={t("compositions")} />
 
       {/* Error Message */}
       <ErrorAlert message={error} onClose={() => setError(null)} />
@@ -237,7 +239,7 @@ export default function CompositionsPage() {
               className="inline-flex items-center justify-center gap-2 rounded-md bg-brand-500 px-3 py-2 text-center text-sm font-medium text-white hover:bg-brand-600 whitespace-nowrap"
             >
               <PlusIcon className="w-4 h-4" />
-              작곡 추가
+              {t("addComposition")}
             </button>
           </div>
         }
@@ -248,16 +250,16 @@ export default function CompositionsPage() {
             <thead>
               <tr className="border-b border-gray-200 bg-gray-50 text-left dark:border-gray-800 dark:bg-gray-800">
                 <th className="px-4 py-3 font-bold text-gray-500 text-theme-xs dark:text-gray-400">
-                  번호
+                  {t("catalogNumber")}
                 </th>
                 <th className="px-4 py-3 font-bold text-gray-500 text-theme-xs dark:text-gray-400">
-                  제목
+                  {t("title")}
                 </th>
                 <th className="px-4 py-3 font-bold text-gray-500 text-theme-xs dark:text-gray-400 w-24 text-center">
-                  녹음
+                  {t("recordings")}
                 </th>
                 <th className="px-4 py-3 font-bold text-gray-500 text-theme-xs dark:text-gray-400 w-32 text-center">
-                  작업
+                  {t("actions")}
                 </th>
               </tr>
             </thead>
@@ -269,10 +271,10 @@ export default function CompositionsPage() {
                     className="px-4 py-8 text-center text-gray-500 text-theme-sm dark:text-gray-400"
                   >
                     {!selectedComposerId
-                      ? "작곡을 보려면 작곡가를 선택하세요."
+                      ? t("selectComposerToViewCompositions")
                       : searchQuery
-                      ? "검색 결과가 없습니다."
-                      : "작곡이 없습니다. \"작곡 추가\" 버튼을 클릭하여 추가하세요."}
+                      ? t("noSearchResults")
+                      : t("noCompositionsFound")}
                   </td>
                 </tr>
               ) : (
@@ -352,7 +354,7 @@ export default function CompositionsPage() {
           <div className="relative w-full max-w-md rounded-lg bg-white p-6 shadow-lg dark:bg-gray-900">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-xl font-bold text-gray-900 dark:text-white">
-                {editingComposition ? "작곡 수정" : "작곡 추가"}
+                {editingComposition ? t("editComposition") : t("addComposition")}
               </h3>
               <button
                 onClick={handleCloseModal}
@@ -365,7 +367,7 @@ export default function CompositionsPage() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
-                  작곡가 <span className="text-red-500">*</span>
+                  {t("composers")} <span className="text-red-500">*</span>
                 </label>
                 <select
                   required
@@ -376,7 +378,7 @@ export default function CompositionsPage() {
                   className="w-full rounded-md border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                 >
                   <option value={0} disabled>
-                    작곡가 선택
+                    {t("selectComposer")}
                   </option>
                   {composers.map((composer) => (
                     <option key={composer.id} value={composer.id}>
@@ -388,7 +390,7 @@ export default function CompositionsPage() {
 
               <div>
                 <label className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
-                  번호
+                  {t("catalogNumber")}
                 </label>
                 <input
                   type="text"
@@ -402,7 +404,7 @@ export default function CompositionsPage() {
 
               <div>
                 <label className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
-                  제목 <span className="text-red-500">*</span>
+                  {t("title")} <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -421,13 +423,13 @@ export default function CompositionsPage() {
                   onClick={handleCloseModal}
                   className="rounded-md border border-gray-300 bg-white px-4 py-2 text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
                 >
-                  취소
+                  {t("cancel")}
                 </button>
                 <button
                   type="submit"
                   className="rounded-md bg-brand-500 px-4 py-2 text-white hover:bg-brand-600"
                 >
-                  {editingComposition ? "수정" : "추가"}
+                  {editingComposition ? t("edit") : t("add")}
                 </button>
               </div>
             </form>
@@ -441,7 +443,7 @@ export default function CompositionsPage() {
           <div className="relative w-full max-w-md rounded-lg bg-white p-6 shadow-lg dark:bg-gray-900">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-xl font-bold text-gray-900 dark:text-white">
-                삭제 확인
+                {t("deleteConfirmation")}
               </h3>
               <button
                 onClick={handleDeleteCancel}
@@ -453,13 +455,13 @@ export default function CompositionsPage() {
 
             <div className="mb-6">
               <p className="text-gray-700 dark:text-gray-300">
-                정말로 이 작곡을 삭제하시겠습니까?
+                {t("deleteConfirmMessage").replace("{type}", t("compositions").toLowerCase())}
               </p>
               <p className="mt-2 font-semibold text-gray-900 dark:text-white">
                 &quot;{deleteConfirmModal.title}&quot;
               </p>
               <p className="mt-2 text-sm text-red-600 dark:text-red-400">
-                이 작업은 취소할 수 없습니다.
+                {t("deleteWarning")}
               </p>
             </div>
 
@@ -469,14 +471,14 @@ export default function CompositionsPage() {
                 onClick={handleDeleteCancel}
                 className="rounded-md border border-gray-300 bg-white px-4 py-2 text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
               >
-                취소
+                {t("cancel")}
               </button>
               <button
                 type="button"
                 onClick={handleDeleteConfirm}
                 className="rounded-md bg-red-500 px-4 py-2 text-white hover:bg-red-600"
               >
-                삭제
+                {t("delete")}
               </button>
             </div>
           </div>

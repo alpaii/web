@@ -3,6 +3,7 @@ import './globals.css';
 
 import { SidebarProvider } from '@/context/SidebarContext';
 import { ThemeProvider } from '@/context/ThemeContext';
+import { LanguageProvider } from '@/context/LanguageContext';
 import type { Metadata } from 'next';
 
 const outfit = Outfit({
@@ -26,7 +27,9 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${outfit.className} dark:bg-gray-900`}>
         <ThemeProvider>
-          <SidebarProvider>{children}</SidebarProvider>
+          <LanguageProvider>
+            <SidebarProvider>{children}</SidebarProvider>
+          </LanguageProvider>
         </ThemeProvider>
       </body>
     </html>

@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useSidebar } from "../context/SidebarContext";
+import { useLanguage } from "../context/LanguageContext";
 import {
   AudioIcon,
   BoxCubeIcon,
@@ -22,55 +23,55 @@ import {
 import SidebarWidget from "./SidebarWidget";
 
 type NavItem = {
-  name: string;
+  nameKey: string; // Translation key
   icon: React.ReactNode;
   path?: string;
-  subItems?: { name: string; path: string; pro?: boolean; new?: boolean }[];
+  subItems?: { nameKey: string; path: string; pro?: boolean; new?: boolean }[];
 };
 
 const navItems: NavItem[] = [
   {
     icon: <GridIcon />,
-    name: "Dashboard",
-    subItems: [{ name: "Ecommerce", path: "/", pro: false }],
+    nameKey: "dashboard",
+    subItems: [{ nameKey: "ecommerce", path: "/", pro: false }],
   },
   {
     icon: <CalenderIcon />,
-    name: "Calendar",
+    nameKey: "calendar",
     path: "/calendar",
   },
   {
     icon: <UserCircleIcon />,
-    name: "User Profile",
+    nameKey: "userProfile",
     path: "/profile",
   },
   {
     icon: <AudioIcon />,
-    name: "클래식 앨범",
+    nameKey: "classicalAlbums",
     subItems: [
-      { name: "작곡가", path: "/classical-albums/composers", pro: false },
-      { name: "작곡", path: "/classical-albums/compositions", pro: false },
-      { name: "아티스트", path: "/classical-albums/artists", pro: false },
-      { name: "녹음", path: "/classical-albums/recordings", pro: false },
-      { name: "앨범", path: "/classical-albums/albums", pro: false },
+      { nameKey: "composers", path: "/classical-albums/composers", pro: false },
+      { nameKey: "compositions", path: "/classical-albums/compositions", pro: false },
+      { nameKey: "artists", path: "/classical-albums/artists", pro: false },
+      { nameKey: "recordings", path: "/classical-albums/recordings", pro: false },
+      { nameKey: "albums", path: "/classical-albums/albums", pro: false },
     ],
   },
   {
-    name: "Forms",
+    nameKey: "forms",
     icon: <ListIcon />,
-    subItems: [{ name: "Form Elements", path: "/form-elements", pro: false }],
+    subItems: [{ nameKey: "formElements", path: "/form-elements", pro: false }],
   },
   {
-    name: "Tables",
+    nameKey: "tables",
     icon: <TableIcon />,
-    subItems: [{ name: "Basic Tables", path: "/basic-tables", pro: false }],
+    subItems: [{ nameKey: "basicTables", path: "/basic-tables", pro: false }],
   },
   {
-    name: "Pages",
+    nameKey: "pages",
     icon: <PageIcon />,
     subItems: [
-      { name: "Blank Page", path: "/blank", pro: false },
-      { name: "404 Error", path: "/error-404", pro: false },
+      { nameKey: "blankPage", path: "/blank", pro: false },
+      { nameKey: "404Error", path: "/error-404", pro: false },
     ],
   },
 ];
@@ -78,36 +79,37 @@ const navItems: NavItem[] = [
 const othersItems: NavItem[] = [
   {
     icon: <PieChartIcon />,
-    name: "Charts",
+    nameKey: "charts",
     subItems: [
-      { name: "Line Chart", path: "/line-chart", pro: false },
-      { name: "Bar Chart", path: "/bar-chart", pro: false },
+      { nameKey: "lineChart", path: "/line-chart", pro: false },
+      { nameKey: "barChart", path: "/bar-chart", pro: false },
     ],
   },
   {
     icon: <BoxCubeIcon />,
-    name: "UI Elements",
+    nameKey: "uiElements",
     subItems: [
-      { name: "Alerts", path: "/alerts", pro: false },
-      { name: "Avatar", path: "/avatars", pro: false },
-      { name: "Badge", path: "/badge", pro: false },
-      { name: "Buttons", path: "/buttons", pro: false },
-      { name: "Images", path: "/images", pro: false },
-      { name: "Videos", path: "/videos", pro: false },
+      { nameKey: "alerts", path: "/alerts", pro: false },
+      { nameKey: "avatar", path: "/avatars", pro: false },
+      { nameKey: "badge", path: "/badge", pro: false },
+      { nameKey: "buttons", path: "/buttons", pro: false },
+      { nameKey: "images", path: "/images", pro: false },
+      { nameKey: "videos", path: "/videos", pro: false },
     ],
   },
   {
     icon: <PlugInIcon />,
-    name: "Authentication",
+    nameKey: "authentication",
     subItems: [
-      { name: "Sign In", path: "/signin", pro: false },
-      { name: "Sign Up", path: "/signup", pro: false },
+      { nameKey: "signIn", path: "/signin", pro: false },
+      { nameKey: "signUp", path: "/signup", pro: false },
     ],
   },
 ];
 
 const AppSidebar: React.FC = () => {
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
+  const { t } = useLanguage();
   const pathname = usePathname();
 
   const renderMenuItems = (
@@ -116,7 +118,7 @@ const AppSidebar: React.FC = () => {
   ) => (
     <ul className="flex flex-col gap-4">
       {navItems.map((nav, index) => (
-        <li key={nav.name}>
+        <li key={nav.nameKey}>
           {nav.subItems ? (
             <button
               onClick={() => handleSubmenuToggle(index, menuType)}
@@ -140,7 +142,7 @@ const AppSidebar: React.FC = () => {
                 {nav.icon}
               </span>
               {(isExpanded || isHovered || isMobileOpen) && (
-                <span className={`menu-item-text`}>{nav.name}</span>
+                <span className={`menu-item-text`}>{t(nav.nameKey)}</span>
               )}
               {(isExpanded || isHovered || isMobileOpen) && (
                 <ChevronDownIcon
@@ -171,7 +173,7 @@ const AppSidebar: React.FC = () => {
                   {nav.icon}
                 </span>
                 {(isExpanded || isHovered || isMobileOpen) && (
-                  <span className={`menu-item-text`}>{nav.name}</span>
+                  <span className={`menu-item-text`}>{t(nav.nameKey)}</span>
                 )}
               </Link>
             )
@@ -191,7 +193,7 @@ const AppSidebar: React.FC = () => {
             >
               <ul className="mt-2 space-y-1 ml-9">
                 {nav.subItems.map((subItem) => (
-                  <li key={subItem.name}>
+                  <li key={subItem.nameKey}>
                     <Link
                       href={subItem.path}
                       className={`menu-dropdown-item ${
@@ -200,7 +202,7 @@ const AppSidebar: React.FC = () => {
                           : "menu-dropdown-item-inactive"
                       }`}
                     >
-                      {subItem.name}
+                      {t(subItem.nameKey)}
                       <span className="flex items-center gap-1 ml-auto">
                         {subItem.new && (
                           <span
@@ -350,7 +352,7 @@ const AppSidebar: React.FC = () => {
                 }`}
               >
                 {isExpanded || isHovered || isMobileOpen ? (
-                  "Menu"
+                  t("menu")
                 ) : (
                   <HorizontaLDots />
                 )}
@@ -367,7 +369,7 @@ const AppSidebar: React.FC = () => {
                 }`}
               >
                 {isExpanded || isHovered || isMobileOpen ? (
-                  "Others"
+                  t("others")
                 ) : (
                   <HorizontaLDots />
                 )}
@@ -376,9 +378,45 @@ const AppSidebar: React.FC = () => {
             </div>
           </div>
         </nav>
+
+        {/* Language Switcher */}
+        <div className={`mt-auto pb-6 ${!isExpanded && !isHovered && !isMobileOpen ? "flex justify-center" : ""}`}>
+          <LanguageSwitcher compact={!isExpanded && !isHovered && !isMobileOpen} />
+        </div>
       </div>
     </aside>
   );
 };
+
+function LanguageSwitcher({ compact }: { compact: boolean }) {
+  const { language, setLanguage } = useLanguage();
+
+  return (
+    <div className={`flex ${compact ? "flex-col gap-1" : "gap-2"}`}>
+      <button
+        onClick={() => setLanguage("ko")}
+        className={`px-3 py-1.5 text-sm rounded transition-colors ${
+          language === "ko"
+            ? "bg-brand-500 text-white"
+            : "bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-700"
+        }`}
+        title="한국어"
+      >
+        {compact ? "KO" : "한국어"}
+      </button>
+      <button
+        onClick={() => setLanguage("en")}
+        className={`px-3 py-1.5 text-sm rounded transition-colors ${
+          language === "en"
+            ? "bg-brand-500 text-white"
+            : "bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-700"
+        }`}
+        title="English"
+      >
+        {compact ? "EN" : "English"}
+      </button>
+    </div>
+  );
+}
 
 export default AppSidebar;

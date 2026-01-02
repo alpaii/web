@@ -5,6 +5,7 @@ import { Recording, Composer, Composition, Artist } from "@/lib/api";
 import CompositionSearch from "@/components/common/CompositionSearch";
 import CompositionDisplay from "@/components/common/CompositionDisplay";
 import ArtistDisplay from "@/components/common/ArtistDisplay";
+import { useLanguage } from "@/context/LanguageContext";
 
 interface RecordingSearchProps {
   recordings: Recording[];
@@ -23,6 +24,7 @@ export default function RecordingSearch({
   onRecordingAdd,
   excludeRecordingIds = [],
 }: RecordingSearchProps) {
+  const { t } = useLanguage();
   // 작곡 검색
   const [searchComposerId, setSearchComposerId] = useState<number>(0);
   const [searchCompositionId, setSearchCompositionId] = useState<number | undefined>(undefined);
@@ -125,7 +127,7 @@ export default function RecordingSearch({
         {/* 작곡 검색 */}
         <div>
           <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-            작곡
+            {t("composition")}
           </label>
           <CompositionSearch
             composers={composers}
@@ -143,7 +145,7 @@ export default function RecordingSearch({
         {/* 아티스트 검색 */}
         <div className="relative">
           <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-            아티스트
+            {t("artists")}
           </label>
           <div className="flex items-center gap-2">
             <input
@@ -151,7 +153,7 @@ export default function RecordingSearch({
               value={searchArtistQuery}
               onChange={(e) => setSearchArtistQuery(e.target.value)}
               onKeyDown={handleArtistKeyDown}
-              placeholder="아티스트 이름 검색..."
+              placeholder={t("searchArtist")}
               className="flex-1 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-white focus:border-brand-500 focus:outline-none"
             />
             {selectedArtistId && (
@@ -160,7 +162,7 @@ export default function RecordingSearch({
                 onClick={handleArtistClear}
                 className="px-3 py-2 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
               >
-                초기화
+                {t("clearSelection")}
               </button>
             )}
           </div>
@@ -190,18 +192,18 @@ export default function RecordingSearch({
       {showResults && (
         <div className="mt-3">
           <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
-            {availableRecordings.length}개의 녹음을 찾았습니다
+            {t("recordingsFound").replace("{count}", String(availableRecordings.length))}
           </p>
           {availableRecordings.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 dark:bg-gray-800">
                   <tr>
-                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400">작곡가</th>
-                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400">작곡</th>
-                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400">녹음년도</th>
-                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400">아티스트</th>
-                    <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-400">작업</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400">{t("composer")}</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400">{t("composition")}</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400">{t("year")}</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400">{t("artists")}</th>
+                    <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-400">{t("actions")}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -239,7 +241,7 @@ export default function RecordingSearch({
                             onClick={() => onRecordingAdd(recording.id)}
                             className="px-2 py-1 bg-brand-500 text-white rounded hover:bg-brand-600 text-xs"
                           >
-                            추가
+                            {t("add")}
                           </button>
                         </td>
                       </tr>
