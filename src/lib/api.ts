@@ -220,21 +220,43 @@ class ApiClient {
     });
   }
 
-  async uploadImage(file: File): Promise<{ image_url: string }> {
-    const formData = new FormData();
-    formData.append('file', file);
+  async uploadImage(file: File, folder?: string): Promise<{ image_url: string }> {
+    // Import Cloudinary upload function dynamically to avoid build issues
+    const { uploadToCloudinary } = await import('./cloudinary');
 
-    const response = await fetch(`${this.baseURL}/api/composers/upload-image`, {
-      method: 'POST',
-      body: formData,
-    });
+    try {
+      // Upload to Cloudinary with folder organization
+      // Default folder: classical-albums/composers
+      // Can be overridden (e.g., classical-albums/albums)
+      const uploadFolder = folder || 'classical-albums/composers';
+      const result = await uploadToCloudinary(file, uploadFolder);
 
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ detail: 'Upload failed' }));
-      throw new Error(error.detail || `HTTP ${response.status}`);
+      return {
+        image_url: result.secure_url
+      };
+    } catch (error) {
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error('Failed to upload image');
     }
+  }
 
-    return response.json();
+  async uploadMultipleImages(files: File[], folder?: string): Promise<string[]> {
+    // Import Cloudinary upload function dynamically to avoid build issues
+    const { uploadMultipleToCloudinary } = await import('./cloudinary');
+
+    try {
+      // Upload multiple images to Cloudinary
+      const uploadFolder = folder || 'classical-albums/albums';
+      const urls = await uploadMultipleToCloudinary(files, uploadFolder);
+      return urls;
+    } catch (error) {
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error('Failed to upload images');
+    }
   }
 
   // Compositions API

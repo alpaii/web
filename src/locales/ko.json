@@ -70,6 +70,7 @@
   "viewRecordingsOf": "{title}의 녹음 보기",
   "viewRecordingsBy": "{name}의 녹음 보기",
   "viewAlbumsWithRecording": "이 녹음이 포함된 앨범 보기",
+  "viewArtistDetails": "{name} 아티스트 정보 보기",
 
   "discogsUrl": "Discogs URL",
   "goclassicUrl": "GoClassic URL",

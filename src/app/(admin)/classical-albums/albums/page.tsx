@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, Fragment } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { apiClient, Album, Recording, Composer, Composition } from "@/lib/api";
@@ -19,6 +20,7 @@ interface PageState {
 }
 
 export default function AlbumsPage() {
+  const router = useRouter();
   const { t } = useLanguage();
   const [albums, setAlbums] = useState<Album[]>([]);
   const [recordings, setRecordings] = useState<Recording[]>([]);
@@ -135,6 +137,54 @@ export default function AlbumsPage() {
     return primaryImg ? primaryImg.image_url : (album.images[0]?.image_url || null);
   };
   
+
+  const handleComposerClick = async (compositionId: number) => {
+    const composition = compositions.find(c => c.id === compositionId);
+    if (!composition) return;
+
+    const composerId = composition.composer_id;
+
+    try {
+      // 작곡 데이터를 미리 로드하고 작곡 페이지의 localStorage에 저장
+      const compositionsData = await apiClient.getCompositions(0, 1000, composerId);
+      const pageState = {
+        selectedComposerId: composerId,
+        searchQuery: '',
+        compositions: compositionsData
+      };
+      localStorage.setItem('compositions_page_state', JSON.stringify(pageState));
+
+      // 작곡 페이지로 이동
+      router.push(`/classical-albums/compositions`);
+    } catch (err) {
+      console.error('Failed to load compositions:', err);
+      // 에러가 발생해도 페이지는 이동
+      router.push(`/classical-albums/compositions`);
+    }
+  };
+
+  const handleArtistClick = async (artistId: number) => {
+    try {
+      // 클릭한 아티스트 정보 찾기
+      const artist = recordings
+        .flatMap(r => r.artists)
+        .find(a => a.id === artistId);
+
+      if (artist) {
+        const pageState = {
+          searchQuery: artist.name
+        };
+        localStorage.setItem('artists_page_state', JSON.stringify(pageState));
+      }
+
+      // 아티스트 페이지로 이동
+      router.push(`/classical-albums/artists`);
+    } catch (err) {
+      console.error('Failed to navigate to artists page:', err);
+      // 에러가 발생해도 페이지는 이동
+      router.push(`/classical-albums/artists`);
+    }
+  };
 
   const handleDelete = async (id: number, albumType: string) => {
     if (!confirm(t("deleteConfirmMessage").replace("{type}", `${albumType} ${t("albums")} (ID: ${id})`))) {
@@ -290,11 +340,10 @@ export default function AlbumsPage() {
                           </div>
                         </div>
                       </td>
-                      {album.recordings.length === 0 ? (
-                        <>
+                      <>
                           <td className="px-4 py-3 text-center" rowSpan={Math.max(1, album.recordings.length) + (album.memo ? 1 : 0)}>
                             <div className="flex flex-col items-center gap-1">
-                              {album.discogs_url && (
+                              {album.discogs_url ? (
                                 <a
                                   href={album.discogs_url}
                                   target="_blank"
@@ -304,8 +353,12 @@ export default function AlbumsPage() {
                                 >
                                   Discogs
                                 </a>
+                              ) : (
+                                <span className="text-xs font-bold text-gray-400 dark:text-gray-500" style={{ fontFamily: 'monospace' }}>
+                                  Discogs
+                                </span>
                               )}
-                              {album.goclassic_url && (
+                              {album.goclassic_url ? (
                                 <a
                                   href={album.goclassic_url}
                                   target="_blank"
@@ -315,84 +368,14 @@ export default function AlbumsPage() {
                                 >
                                   GoClassic
                                 </a>
-                              )}
-                              {album.custom_urls && album.custom_urls.length > 0 && (
-                                <>
-                                  {(album.discogs_url || album.goclassic_url) && (
-                                    <div className="h-2" />
-                                  )}
-                                  {album.custom_urls.map((customUrl) => (
-                                    <a
-                                      key={customUrl.id}
-                                      href={customUrl.url}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="text-xs font-bold text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 transition-colors"
-                                      style={{ fontFamily: 'monospace' }}
-                                    >
-                                      {customUrl.url_name}
-                                    </a>
-                                  ))}
-                                </>
-                              )}
-                              {!album.discogs_url && !album.goclassic_url && (!album.custom_urls || album.custom_urls.length === 0) && (
-                                <span className="text-xs text-gray-400 dark:text-gray-500">-</span>
-                              )}
-                            </div>
-                          </td>
-                          <td className="px-4 py-3 text-gray-400 dark:text-gray-500 italic text-theme-sm" colSpan={4}>
-                            {t("noRecording")}
-                          </td>
-                          <td className="px-4 py-3 w-32" rowSpan={Math.max(1, album.recordings.length) + (album.memo ? 1 : 0)}>
-                            <div className="flex items-center justify-center gap-2">
-                              <Link
-                                href={`/classical-albums/albums/${album.id}/edit`}
-                                className="rounded p-2.5 text-brand-500 hover:bg-gray-100 dark:hover:bg-gray-800"
-                                title={t("edit")}
-                              >
-                                <PencilIcon className="w-5 h-5" />
-                              </Link>
-                              <button
-                                onClick={() => handleDelete(album.id, album.album_type)}
-                                className="rounded p-2.5 text-red-500 hover:bg-gray-100 dark:hover:bg-gray-800"
-                                title={t("delete")}
-                              >
-                                <TrashBinIcon className="w-5 h-5" />
-                              </button>
-                            </div>
-                          </td>
-                        </>
-                      ) : (
-                        <>
-                          <td className="px-4 py-3 text-center" rowSpan={Math.max(1, album.recordings.length) + (album.memo ? 1 : 0)}>
-                            <div className="flex flex-col items-center gap-1">
-                              {album.discogs_url && (
-                                <a
-                                  href={album.discogs_url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-xs text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300 transition-colors"
-                                  style={{ fontFamily: 'monospace' }}
-                                >
-                                  Discogs
-                                </a>
-                              )}
-                              {album.goclassic_url && (
-                                <a
-                                  href={album.goclassic_url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-xs text-teal-600 hover:text-teal-700 dark:text-teal-400 dark:hover:text-teal-300 transition-colors"
-                                  style={{ fontFamily: 'monospace' }}
-                                >
+                              ) : (
+                                <span className="text-xs font-bold text-gray-400 dark:text-gray-500" style={{ fontFamily: 'monospace' }}>
                                   GoClassic
-                                </a>
+                                </span>
                               )}
                               {album.custom_urls && album.custom_urls.length > 0 && (
                                 <>
-                                  {(album.discogs_url || album.goclassic_url) && (
-                                    <div className="h-2" />
-                                  )}
+                                  <div className="h-2" />
                                   {album.custom_urls.map((customUrl) => (
                                     <a
                                       key={customUrl.id}
@@ -407,13 +390,17 @@ export default function AlbumsPage() {
                                   ))}
                                 </>
                               )}
-                              {!album.discogs_url && !album.goclassic_url && (!album.custom_urls || album.custom_urls.length === 0) && (
-                                <span className="text-xs text-gray-400 dark:text-gray-500">-</span>
-                              )}
                             </div>
                           </td>
-                          <td className="px-4 py-3 text-gray-600 text-theme-sm dark:text-gray-400">
-                            {getComposerName(album.recordings[0].composition_id)}
+                          <td className="px-4 py-3">
+                            <button
+                              onClick={() => handleComposerClick(album.recordings[0].composition_id)}
+                              className="text-brand-500 dark:text-brand-400 hover:text-brand-600 dark:hover:text-brand-300 cursor-pointer transition-colors text-left font-semibold text-theme-sm"
+                              style={{ fontFamily: '"Noto Sans Mono", monospace' }}
+                              title={t("viewCompositionsBy").replace("{name}", getComposerName(album.recordings[0].composition_id))}
+                            >
+                              {getComposerName(album.recordings[0].composition_id)}
+                            </button>
                           </td>
                           <td className="px-4 py-3">
                             <CompositionDisplay composition={getCompositionDisplay(album.recordings[0].composition_id)} />
@@ -424,7 +411,7 @@ export default function AlbumsPage() {
                           <td className="px-4 py-3">
                             <div className="space-y-1">
                               {album.recordings[0].artists.map(artist => (
-                                <ArtistDisplay key={artist.id} artist={artist} />
+                                <ArtistDisplay key={artist.id} artist={artist} onClick={handleArtistClick} />
                               ))}
                             </div>
                           </td>
@@ -447,12 +434,18 @@ export default function AlbumsPage() {
                             </div>
                           </td>
                         </>
-                      )}
                     </tr>
                     {album.recordings.slice(1).map((recording) => (
                       <tr key={recording.id} className="border-b border-gray-200 dark:border-gray-800">
-                        <td className="px-4 py-3 text-gray-600 text-theme-sm dark:text-gray-400">
-                          {getComposerName(recording.composition_id)}
+                        <td className="px-4 py-3">
+                          <button
+                            onClick={() => handleComposerClick(recording.composition_id)}
+                            className="text-brand-500 dark:text-brand-400 hover:text-brand-600 dark:hover:text-brand-300 cursor-pointer transition-colors text-left font-semibold text-theme-sm"
+                            style={{ fontFamily: '"Noto Sans Mono", monospace' }}
+                            title={t("viewCompositionsBy").replace("{name}", getComposerName(recording.composition_id))}
+                          >
+                            {getComposerName(recording.composition_id)}
+                          </button>
                         </td>
                         <td className="px-4 py-3">
                           <CompositionDisplay composition={getCompositionDisplay(recording.composition_id)} />
@@ -463,7 +456,7 @@ export default function AlbumsPage() {
                         <td className="px-4 py-3">
                           <div className="space-y-1">
                             {recording.artists.map(artist => (
-                              <ArtistDisplay key={artist.id} artist={artist} />
+                              <ArtistDisplay key={artist.id} artist={artist} onClick={handleArtistClick} />
                             ))}
                           </div>
                         </td>

@@ -29,15 +29,36 @@ export default function ArtistsPage() {
 
   const formatLife = (birthYear: number | null, deathYear: number | null): string => {
     if (!birthYear && !deathYear) return "-";
-    if (birthYear && !deathYear) return `${birthYear} - ?`;
-    if (!birthYear && deathYear) return `? - ${deathYear}`;
+    if (birthYear && !deathYear) {
+      const currentYear = new Date().getFullYear();
+      const currentAge = currentYear - birthYear;
+      return `${birthYear} - * (${currentAge})`;
+    }
+    if (!birthYear && deathYear) return `* - ${deathYear}`;
 
     const age = deathYear! - birthYear!;
     return `${birthYear} - ${deathYear} (${age})`;
   };
 
   useEffect(() => {
-    loadArtists(undefined, true);
+    // localStorage에서 페이지 상태 로드
+    const savedState = localStorage.getItem('artists_page_state');
+    if (savedState) {
+      try {
+        const pageState = JSON.parse(savedState);
+        const searchTerm = pageState.searchQuery || '';
+        setSearchQuery(searchTerm);
+        // 검색어로 실제 검색 수행
+        loadArtists(searchTerm, true);
+        // 상태를 사용한 후 제거
+        localStorage.removeItem('artists_page_state');
+      } catch (err) {
+        console.error('Failed to parse artists page state:', err);
+        loadArtists(undefined, true);
+      }
+    } else {
+      loadArtists(undefined, true);
+    }
   }, []);
 
   const loadArtists = async (searchTerm?: string, isInitialLoad = false) => {
@@ -225,33 +246,39 @@ export default function ArtistsPage() {
                       {artist.instrument || "-"}
                     </td>
                     <td className="px-4 py-3 text-center">
-                      <button
-                        onClick={async () => {
-                          try {
-                            // 녹음 데이터를 미리 로드하고 녹음 페이지의 localStorage에 저장
-                            const recordingsData = await apiClient.getRecordings(0, 1000, undefined, undefined, artist.id);
-                            const pageState = {
-                              selectedCompositionId: undefined,
-                              filterComposerId: 0,
-                              filterSelectedArtistId: artist.id,
-                              recordings: recordingsData
-                            };
-                            localStorage.setItem('recordings_page_state', JSON.stringify(pageState));
+                      {artist.recording_count > 0 ? (
+                        <button
+                          onClick={async () => {
+                            try {
+                              // 녹음 데이터를 미리 로드하고 녹음 페이지의 localStorage에 저장
+                              const recordingsData = await apiClient.getRecordings(0, 1000, undefined, undefined, artist.id);
+                              const pageState = {
+                                selectedCompositionId: undefined,
+                                filterComposerId: 0,
+                                filterSelectedArtistId: artist.id,
+                                recordings: recordingsData
+                              };
+                              localStorage.setItem('recordings_page_state', JSON.stringify(pageState));
 
-                            // 녹음 페이지로 이동
-                            router.push(`/classical-albums/recordings`);
-                          } catch (err) {
-                            console.error('Failed to load recordings:', err);
-                            // 에러가 발생해도 페이지는 이동
-                            router.push(`/classical-albums/recordings`);
-                          }
-                        }}
-                        className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 underline cursor-pointer transition-colors"
-                        title={`View recordings by ${artist.name}`}
-                        style={{ fontFamily: 'monospace' }}
-                      >
-                        {artist.recording_count}
-                      </button>
+                              // 녹음 페이지로 이동
+                              router.push(`/classical-albums/recordings`);
+                            } catch (err) {
+                              console.error('Failed to load recordings:', err);
+                              // 에러가 발생해도 페이지는 이동
+                              router.push(`/classical-albums/recordings`);
+                            }
+                          }}
+                          className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 underline cursor-pointer transition-colors"
+                          title={`View recordings by ${artist.name}`}
+                          style={{ fontFamily: 'monospace' }}
+                        >
+                          {artist.recording_count}
+                        </button>
+                      ) : (
+                        <span className="text-gray-400 dark:text-gray-500" style={{ fontFamily: 'monospace' }}>
+                          0
+                        </span>
+                      )}
                     </td>
                     <td className="px-4 py-3 w-32 text-center">
                       <div className="flex items-center justify-center gap-2">

@@ -184,17 +184,27 @@ export default function AlbumForm({ mode, albumId }: AlbumFormProps) {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
+    // Validate file sizes (max 5MB each)
+    const maxSize = 5 * 1024 * 1024;
+    for (const file of Array.from(files)) {
+      if (file.size > maxSize) {
+        setError(t("errorImageTooLarge"));
+        return;
+      }
+      if (!file.type.startsWith("image/")) {
+        setError(t("errorInvalidImageType"));
+        return;
+      }
+    }
+
     setUploading(true);
     try {
-      const uploadPromises = Array.from(files).map(file => {
-        return new Promise<string>((resolve) => {
-          const reader = new FileReader();
-          reader.onloadend = () => resolve(reader.result as string);
-          reader.readAsDataURL(file);
-        });
-      });
+      // Upload multiple images to Cloudinary
+      const imageUrls = await apiClient.uploadMultipleImages(
+        Array.from(files),
+        'classical-albums/albums'
+      );
 
-      const imageUrls = await Promise.all(uploadPromises);
       setFormData(prev => ({
         ...prev,
         image_urls: [...(prev.image_urls || []), ...imageUrls]

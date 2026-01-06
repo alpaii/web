@@ -70,6 +70,7 @@
   "viewRecordingsOf": "View recordings of {title}",
   "viewRecordingsBy": "View recordings by {name}",
   "viewAlbumsWithRecording": "View albums with this recording",
+  "viewArtistDetails": "View artist details for {name}",
 
   "discogsUrl": "Discogs URL",
   "goclassicUrl": "GoClassic URL",

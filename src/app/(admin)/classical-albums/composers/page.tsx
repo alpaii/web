@@ -37,8 +37,8 @@ export default function ComposersPage() {
 
   const formatLife = (birthYear: number | null, deathYear: number | null): string => {
     if (!birthYear && !deathYear) return "-";
-    if (birthYear && !deathYear) return `${birthYear} - ?`;
-    if (!birthYear && deathYear) return `? - ${deathYear}`;
+    if (birthYear && !deathYear) return `${birthYear} - *`;
+    if (!birthYear && deathYear) return `* - ${deathYear}`;
 
     const age = deathYear! - birthYear!;
     return `${birthYear} - ${deathYear} (${age})`;
@@ -80,7 +80,7 @@ export default function ComposersPage() {
         nationality: composer.nationality || "",
         image_url: composer.image_url || "",
       });
-      setImagePreview(composer.image_url ? `http://localhost:8000${composer.image_url}` : null);
+      setImagePreview(composer.image_url || null);
     } else {
       setEditingComposer(null);
       setFormData({
@@ -129,9 +129,10 @@ export default function ComposersPage() {
 
     setUploading(true);
     try {
-      const result = await apiClient.uploadImage(file);
+      const result = await apiClient.uploadImage(file, 'classical-albums/composers');
       setFormData({ ...formData, image_url: result.image_url });
-      setImagePreview(`http://localhost:8000${result.image_url}`);
+      // Cloudinary returns full URL, no need to prepend localhost
+      setImagePreview(result.image_url);
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : t("errorUploadFailed"));
@@ -257,7 +258,7 @@ export default function ComposersPage() {
                     <td className="px-4 py-3 text-gray-800 text-theme-sm dark:text-white/90">
                       <ComposerProfile
                         name={composer.name}
-                        profileImage={composer.image_url ? `http://localhost:8000${composer.image_url}` : null}
+                        profileImage={composer.image_url || null}
                         size="md"
                       />
                     </td>

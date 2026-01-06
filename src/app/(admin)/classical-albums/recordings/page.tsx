@@ -308,6 +308,52 @@ export default function RecordingsPage() {
     }
   };
 
+  const handleComposerClick = async (compositionId: number) => {
+    const composition = compositions.find(c => c.id === compositionId);
+    if (!composition) return;
+
+    const composerId = composition.composer_id;
+
+    try {
+      // 작곡 데이터를 미리 로드하고 작곡 페이지의 localStorage에 저장
+      const compositionsData = await apiClient.getCompositions(0, 1000, composerId);
+      const pageState = {
+        selectedComposerId: composerId,
+        searchQuery: '',
+        compositions: compositionsData
+      };
+      localStorage.setItem('compositions_page_state', JSON.stringify(pageState));
+
+      // 작곡 페이지로 이동
+      router.push(`/classical-albums/compositions`);
+    } catch (err) {
+      console.error('Failed to load compositions:', err);
+      // 에러가 발생해도 페이지는 이동
+      router.push(`/classical-albums/compositions`);
+    }
+  };
+
+  const handleArtistClick = async (artistId: number) => {
+    try {
+      // 클릭한 아티스트 정보 찾기
+      const artist = artists.find(a => a.id === artistId);
+
+      if (artist) {
+        const pageState = {
+          searchQuery: artist.name
+        };
+        localStorage.setItem('artists_page_state', JSON.stringify(pageState));
+      }
+
+      // 아티스트 페이지로 이동
+      router.push(`/classical-albums/artists`);
+    } catch (err) {
+      console.error('Failed to navigate to artists page:', err);
+      // 에러가 발생해도 페이지는 이동
+      router.push(`/classical-albums/artists`);
+    }
+  };
+
   const getComposerName = (compositionId: number): string => {
     const composition = compositions.find(c => c.id === compositionId);
     if (!composition) return "-";
@@ -670,8 +716,15 @@ export default function RecordingsPage() {
                     key={recording.id}
                     className="border-b border-gray-200 dark:border-gray-800"
                   >
-                    <td className="px-4 py-3 text-gray-800 text-theme-sm dark:text-white/90">
-                      {getComposerName(recording.composition_id)}
+                    <td className="px-4 py-3">
+                      <button
+                        onClick={() => handleComposerClick(recording.composition_id)}
+                        className="text-brand-500 dark:text-brand-400 hover:text-brand-600 dark:hover:text-brand-300 cursor-pointer transition-colors text-left font-semibold text-theme-sm"
+                        style={{ fontFamily: '"Noto Sans Mono", monospace' }}
+                        title={t("viewCompositionsBy").replace("{name}", getComposerName(recording.composition_id))}
+                      >
+                        {getComposerName(recording.composition_id)}
+                      </button>
                     </td>
                     <td className="px-4 py-3">
                       <CompositionDisplay composition={getCompositionDisplay(recording.composition_id)} />
@@ -683,7 +736,7 @@ export default function RecordingsPage() {
                       {recording.artists.length > 0 ? (
                         <div className="flex flex-col gap-1">
                           {recording.artists.map((artist) => (
-                            <ArtistDisplay key={artist.id} artist={artist} />
+                            <ArtistDisplay key={artist.id} artist={artist} onClick={handleArtistClick} />
                           ))}
                         </div>
                       ) : (
