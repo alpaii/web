@@ -80,18 +80,21 @@ export interface Recording {
   id: number;
   composition_id: number;
   year: number | null;
+  memo: string | null;
   artists: Artist[];
 }
 
 export interface RecordingCreate {
   composition_id: number;
   year?: number | null;
+  memo?: string | null;
   artist_ids: number[];
 }
 
 export interface RecordingUpdate {
   composition_id?: number;
   year?: number | null;
+  memo?: string | null;
   artist_ids?: number[];
 }
 

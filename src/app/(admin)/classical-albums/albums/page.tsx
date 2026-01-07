@@ -298,7 +298,7 @@ export default function AlbumsPage() {
                   filteredAlbums.map((album) => (
                     <Fragment key={album.id}>
                     <tr className="border-b border-gray-200 dark:border-gray-800">
-                      <td className="px-4 py-3" rowSpan={Math.max(1, album.recordings.length) + (album.memo ? 1 : 0)}>
+                      <td className="px-4 py-3" rowSpan={Math.max(1, album.recordings.length) + album.recordings.filter(r => r.memo).length + (album.memo ? 1 : 0)}>
                         <div className="flex items-center justify-center gap-3">
                           <div className="flex flex-col gap-1">
                             {(() => {
@@ -341,7 +341,7 @@ export default function AlbumsPage() {
                         </div>
                       </td>
                       <>
-                          <td className="px-4 py-3 text-center" rowSpan={Math.max(1, album.recordings.length) + (album.memo ? 1 : 0)}>
+                          <td className="px-4 py-3 text-center" rowSpan={Math.max(1, album.recordings.length) + album.recordings.filter(r => r.memo).length + (album.memo ? 1 : 0)}>
                             <div className="flex flex-col items-center gap-1">
                               {album.discogs_url ? (
                                 <a
@@ -392,7 +392,7 @@ export default function AlbumsPage() {
                               )}
                             </div>
                           </td>
-                          <td className="px-4 py-3">
+                          <td className="px-4 py-3" rowSpan={album.recordings[0].memo ? 2 : 1}>
                             <button
                               onClick={() => handleComposerClick(album.recordings[0].composition_id)}
                               className="text-brand-500 dark:text-brand-400 hover:text-brand-600 dark:hover:text-brand-300 cursor-pointer transition-colors text-left font-semibold text-theme-sm"
@@ -415,7 +415,7 @@ export default function AlbumsPage() {
                               ))}
                             </div>
                           </td>
-                          <td className="px-4 py-3 w-32" rowSpan={Math.max(1, album.recordings.length) + (album.memo ? 1 : 0)}>
+                          <td className="px-4 py-3 w-32" rowSpan={Math.max(1, album.recordings.length) + album.recordings.filter(r => r.memo).length + (album.memo ? 1 : 0)}>
                             <div className="flex items-center justify-center gap-2">
                               <Link
                                 href={`/classical-albums/albums/${album.id}/edit`}
@@ -435,32 +435,52 @@ export default function AlbumsPage() {
                           </td>
                         </>
                     </tr>
-                    {album.recordings.slice(1).map((recording) => (
-                      <tr key={recording.id} className="border-b border-gray-200 dark:border-gray-800">
-                        <td className="px-4 py-3">
-                          <button
-                            onClick={() => handleComposerClick(recording.composition_id)}
-                            className="text-brand-500 dark:text-brand-400 hover:text-brand-600 dark:hover:text-brand-300 cursor-pointer transition-colors text-left font-semibold text-theme-sm"
-                            style={{ fontFamily: '"Noto Sans Mono", monospace' }}
-                            title={t("viewCompositionsBy").replace("{name}", getComposerName(recording.composition_id))}
-                          >
-                            {getComposerName(recording.composition_id)}
-                          </button>
-                        </td>
-                        <td className="px-4 py-3">
-                          <CompositionDisplay composition={getCompositionDisplay(recording.composition_id)} />
-                        </td>
-                        <td className="px-4 py-3 text-gray-600 text-theme-sm dark:text-gray-400 text-center">
-                          {recording.year || '-'}
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="space-y-1">
-                            {recording.artists.map(artist => (
-                              <ArtistDisplay key={artist.id} artist={artist} onClick={handleArtistClick} />
-                            ))}
+                    {album.recordings[0].memo && (
+                      <tr className="border-b border-gray-200 dark:border-gray-800">
+                        <td colSpan={3} className="px-4 py-3">
+                          <div className="border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 bg-green-50 dark:bg-green-900/20 text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                            {album.recordings[0].memo}
                           </div>
                         </td>
                       </tr>
+                    )}
+                    {album.recordings.slice(1).map((recording) => (
+                      <Fragment key={recording.id}>
+                        <tr className="border-b border-gray-200 dark:border-gray-800">
+                          <td className="px-4 py-3" rowSpan={recording.memo ? 2 : 1}>
+                            <button
+                              onClick={() => handleComposerClick(recording.composition_id)}
+                              className="text-brand-500 dark:text-brand-400 hover:text-brand-600 dark:hover:text-brand-300 cursor-pointer transition-colors text-left font-semibold text-theme-sm"
+                              style={{ fontFamily: '"Noto Sans Mono", monospace' }}
+                              title={t("viewCompositionsBy").replace("{name}", getComposerName(recording.composition_id))}
+                            >
+                              {getComposerName(recording.composition_id)}
+                            </button>
+                          </td>
+                          <td className="px-4 py-3">
+                            <CompositionDisplay composition={getCompositionDisplay(recording.composition_id)} />
+                          </td>
+                          <td className="px-4 py-3 text-gray-600 text-theme-sm dark:text-gray-400 text-center">
+                            {recording.year || '-'}
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="space-y-1">
+                              {recording.artists.map(artist => (
+                                <ArtistDisplay key={artist.id} artist={artist} onClick={handleArtistClick} />
+                              ))}
+                            </div>
+                          </td>
+                        </tr>
+                        {recording.memo && (
+                          <tr className="border-b border-gray-200 dark:border-gray-800">
+                            <td colSpan={3} className="px-4 py-3">
+                              <div className="border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 bg-green-50 dark:bg-green-900/20 text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                                {recording.memo}
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </Fragment>
                     ))}
                     {album.memo && (
                       <tr className="border-b border-gray-200 dark:border-gray-800">

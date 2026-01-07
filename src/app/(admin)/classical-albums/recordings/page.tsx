@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Fragment } from "react";
 import { useRouter } from "next/navigation";
 import { apiClient, Recording, RecordingCreate, Composition, Artist, Composer, Album } from "@/lib/api";
 import { PlusIcon, PencilIcon, TrashBinIcon, CloseIcon } from "@/icons/index";
@@ -384,6 +384,7 @@ export default function RecordingsPage() {
       setFormData({
         composition_id: recording.composition_id,
         year: recording.year,
+        memo: recording.memo,
         artist_ids: recording.artists.map(a => a.id),
       });
       setSelectedArtists(recording.artists);
@@ -393,6 +394,7 @@ export default function RecordingsPage() {
       setFormData({
         composition_id: 0,
         year: null,
+        memo: null,
         artist_ids: [],
       });
       setSelectedArtists([]);
@@ -410,6 +412,7 @@ export default function RecordingsPage() {
     setFormData({
       composition_id: 0,
       year: null,
+      memo: null,
       artist_ids: [],
     });
     setSelectedArtists([]);
@@ -539,6 +542,7 @@ export default function RecordingsPage() {
       const data = {
         composition_id: formData.composition_id,
         year: formData.year,
+        memo: formData.memo,
         artist_ids: formData.artist_ids,
       };
 
@@ -716,66 +720,74 @@ export default function RecordingsPage() {
                 </tr>
               ) : (
                 recordings.map((recording) => (
-                  <tr
-                    key={recording.id}
-                    className="border-b border-gray-200 dark:border-gray-800"
-                  >
-                    <td className="px-4 py-3">
-                      <button
-                        onClick={() => handleComposerClick(recording.composition_id)}
-                        className="text-brand-500 dark:text-brand-400 hover:text-brand-600 dark:hover:text-brand-300 cursor-pointer transition-colors text-left font-semibold text-theme-sm"
-                        style={{ fontFamily: '"Noto Sans Mono", monospace' }}
-                        title={t("viewCompositionsBy").replace("{name}", getComposerName(recording.composition_id))}
-                      >
-                        {getComposerName(recording.composition_id)}
-                      </button>
-                    </td>
-                    <td className="px-4 py-3">
-                      <CompositionDisplay composition={getCompositionDisplay(recording.composition_id)} />
-                    </td>
-                    <td className="px-4 py-3 text-gray-500 text-theme-sm dark:text-gray-400 text-center">
-                      {recording.year || "-"}
-                    </td>
-                    <td className="px-4 py-3">
-                      {recording.artists.length > 0 ? (
-                        <div className="flex flex-col gap-1">
-                          {recording.artists.map((artist) => (
-                            <ArtistDisplay key={artist.id} artist={artist} onClick={handleArtistClick} />
-                          ))}
+                  <Fragment key={recording.id}>
+                    <tr className="border-b border-gray-200 dark:border-gray-800">
+                      <td className="px-4 py-3" rowSpan={recording.memo ? 2 : 1}>
+                        <button
+                          onClick={() => handleComposerClick(recording.composition_id)}
+                          className="text-brand-500 dark:text-brand-400 hover:text-brand-600 dark:hover:text-brand-300 cursor-pointer transition-colors text-left font-semibold text-theme-sm"
+                          style={{ fontFamily: '"Noto Sans Mono", monospace' }}
+                          title={t("viewCompositionsBy").replace("{name}", getComposerName(recording.composition_id))}
+                        >
+                          {getComposerName(recording.composition_id)}
+                        </button>
+                      </td>
+                      <td className="px-4 py-3">
+                        <CompositionDisplay composition={getCompositionDisplay(recording.composition_id)} />
+                      </td>
+                      <td className="px-4 py-3 text-gray-500 text-theme-sm dark:text-gray-400 text-center">
+                        {recording.year || "-"}
+                      </td>
+                      <td className="px-4 py-3">
+                        {recording.artists.length > 0 ? (
+                          <div className="flex flex-col gap-1">
+                            {recording.artists.map((artist) => (
+                              <ArtistDisplay key={artist.id} artist={artist} onClick={handleArtistClick} />
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-gray-500 text-theme-sm dark:text-gray-400">-</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-center" rowSpan={recording.memo ? 2 : 1}>
+                        <button
+                          onClick={() => handleAlbumClick(recording.id)}
+                          className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 underline cursor-pointer transition-colors"
+                          title={`View albums with this recording`}
+                          style={{ fontFamily: 'monospace' }}
+                        >
+                          {getAlbumCount(recording.id)}
+                        </button>
+                      </td>
+                      <td className="px-4 py-3 w-32" rowSpan={recording.memo ? 2 : 1}>
+                        <div className="flex items-center justify-center gap-2">
+                          <button
+                            onClick={() => handleOpenModal(recording)}
+                            className="rounded p-2.5 text-brand-500 hover:bg-gray-100 dark:hover:bg-gray-800"
+                            title={t("edit")}
+                          >
+                            <PencilIcon className="w-5 h-5" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(recording.id)}
+                            className="rounded p-2.5 text-red-500 hover:bg-gray-100 dark:hover:bg-gray-800"
+                            title={t("delete")}
+                          >
+                            <TrashBinIcon className="w-5 h-5" />
+                          </button>
                         </div>
-                      ) : (
-                        <span className="text-gray-500 text-theme-sm dark:text-gray-400">-</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <button
-                        onClick={() => handleAlbumClick(recording.id)}
-                        className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 underline cursor-pointer transition-colors"
-                        title={`View albums with this recording`}
-                        style={{ fontFamily: 'monospace' }}
-                      >
-                        {getAlbumCount(recording.id)}
-                      </button>
-                    </td>
-                    <td className="px-4 py-3 w-32">
-                      <div className="flex items-center justify-center gap-2">
-                        <button
-                          onClick={() => handleOpenModal(recording)}
-                          className="rounded p-2.5 text-brand-500 hover:bg-gray-100 dark:hover:bg-gray-800"
-                          title={t("edit")}
-                        >
-                          <PencilIcon className="w-5 h-5" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(recording.id)}
-                          className="rounded p-2.5 text-red-500 hover:bg-gray-100 dark:hover:bg-gray-800"
-                          title={t("delete")}
-                        >
-                          <TrashBinIcon className="w-5 h-5" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
+                      </td>
+                    </tr>
+                    {recording.memo && (
+                      <tr className="border-b border-gray-200 dark:border-gray-800">
+                        <td colSpan={3} className="px-4 py-3">
+                          <div className="border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 bg-green-50 dark:bg-green-900/20 text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                            {recording.memo}
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
                 ))
               )}
             </tbody>
@@ -826,6 +838,25 @@ export default function RecordingsPage() {
                     })
                   }
                   className="w-full rounded-md border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
+                  {t("memo")}
+                </label>
+                <textarea
+                  value={formData.memo || ""}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      memo: e.target.value || null,
+                    })
+                  }
+                  rows={3}
+                  maxLength={1000}
+                  className="w-full rounded-md border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                  placeholder={t("memoPlaceholder")}
                 />
               </div>
 
