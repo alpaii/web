@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { apiClient, Recording, RecordingCreate, Composition, Artist, Composer, Album } from "@/lib/api";
 import { PlusIcon, PencilIcon, TrashBinIcon, CloseIcon } from "@/icons/index";
@@ -55,6 +55,7 @@ export default function RecordingsPage() {
   const [filteredArtists, setFilteredArtists] = useState<Artist[]>([]);
   const [selectedArtists, setSelectedArtists] = useState<Artist[]>([]);
   const [highlightedArtistIndex, setHighlightedArtistIndex] = useState<number>(-1);
+  const hasLoadedRef = useRef(false);
 
   // 페이지 상태를 localStorage에 저장
   const savePageState = (state: PageState) => {
@@ -77,7 +78,10 @@ export default function RecordingsPage() {
   };
 
   useEffect(() => {
-    loadData();
+    if (!hasLoadedRef.current) {
+      hasLoadedRef.current = true;
+      loadData();
+    }
   }, []);
 
   useEffect(() => {

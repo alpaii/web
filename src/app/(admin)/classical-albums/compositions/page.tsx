@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { apiClient, Composition, CompositionCreate, Composer } from "@/lib/api";
 import { PlusIcon, PencilIcon, TrashBinIcon, CloseIcon } from "@/icons/index";
@@ -40,6 +40,7 @@ export default function CompositionsPage() {
     catalog_number: "",
     title: "",
   });
+  const hasLoadedRef = useRef(false);
 
   // 페이지 상태를 localStorage에 저장
   const savePageState = (state: PageState) => {
@@ -62,7 +63,10 @@ export default function CompositionsPage() {
   };
 
   useEffect(() => {
-    loadComposers();
+    if (!hasLoadedRef.current) {
+      hasLoadedRef.current = true;
+      loadComposers();
+    }
   }, []);
 
   useEffect(() => {

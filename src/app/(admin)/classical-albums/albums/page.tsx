@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Fragment } from "react";
+import { useState, useEffect, useRef, Fragment } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -28,6 +28,7 @@ export default function AlbumsPage() {
   const [compositions, setCompositions] = useState<Composition[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const hasLoadedRef = useRef(false);
 
 
   // Filter state
@@ -60,18 +61,14 @@ export default function AlbumsPage() {
       // localStorage에서 저장된 상태 확인
       const savedState = loadPageState();
 
-      const [recordingsData, composersData, compositionsData, albumsData] = await Promise.all([
-        apiClient.getRecordings(0, 1000),
-        apiClient.getComposers(0, 1000),
-        apiClient.getCompositions(0, 1000),
-        apiClient.getAlbums(0, 1000),
-      ]);
+      // 단일 API 호출로 모든 데이터 가져오기 (4개 요청 → 1개 요청)
+      const pageData = await apiClient.getAlbumsPageData(0, 1000);
 
-      const sortedComposers = composersData.sort((a, b) => a.name.localeCompare(b.name));
-      setRecordings(recordingsData);
+      const sortedComposers = pageData.composers.sort((a, b) => a.name.localeCompare(b.name));
+      setRecordings(pageData.recordings);
       setComposers(sortedComposers);
-      setCompositions(compositionsData);
-      setAlbums(albumsData);
+      setCompositions(pageData.compositions);
+      setAlbums(pageData.albums);
 
       // 저장된 selectedRecordingId가 있으면 복원
       if (savedState?.selectedRecordingId) {
@@ -87,7 +84,10 @@ export default function AlbumsPage() {
   };
 
   useEffect(() => {
-    loadData();
+    if (!hasLoadedRef.current) {
+      hasLoadedRef.current = true;
+      loadData();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

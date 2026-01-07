@@ -149,6 +149,13 @@ export interface AlbumUpdate {
   custom_urls?: AlbumCustomUrlCreate[];
 }
 
+export interface AlbumsPageData {
+  albums: Album[];
+  recordings: Recording[];
+  composers: Composer[];
+  compositions: Composition[];
+}
+
 class ApiClient {
   private baseURL: string;
 
@@ -386,6 +393,15 @@ class ApiClient {
   }
 
   // Albums API
+  async getAlbumsPageData(skip = 0, limit = 1000): Promise<AlbumsPageData> {
+    const params = new URLSearchParams({
+      skip: skip.toString(),
+      limit: limit.toString(),
+    });
+
+    return this.request<AlbumsPageData>(`/api/albums/page-data?${params.toString()}`);
+  }
+
   async getAlbums(skip = 0, limit = 100, albumType?: string): Promise<Album[]> {
     const params = new URLSearchParams({
       skip: skip.toString(),

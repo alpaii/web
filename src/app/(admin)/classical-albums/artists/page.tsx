@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { apiClient, Artist, ArtistCreate, ArtistUpdate } from "@/lib/api";
 import { PlusIcon, PencilIcon, TrashBinIcon, CloseIcon } from "@/icons/index";
@@ -26,6 +26,7 @@ export default function ArtistsPage() {
     nationality: "",
     instrument: "",
   });
+  const hasLoadedRef = useRef(false);
 
   const formatLife = (birthYear: number | null, deathYear: number | null): string => {
     if (!birthYear && !deathYear) return "-";
@@ -41,13 +42,15 @@ export default function ArtistsPage() {
   };
 
   useEffect(() => {
-    // localStorage에서 페이지 상태 로드
-    const savedState = localStorage.getItem('artists_page_state');
-    if (savedState) {
-      try {
-        const pageState = JSON.parse(savedState);
-        const searchTerm = pageState.searchQuery || '';
-        setSearchQuery(searchTerm);
+    if (!hasLoadedRef.current) {
+      hasLoadedRef.current = true;
+      // localStorage에서 페이지 상태 로드
+      const savedState = localStorage.getItem('artists_page_state');
+      if (savedState) {
+        try {
+          const pageState = JSON.parse(savedState);
+          const searchTerm = pageState.searchQuery || '';
+          setSearchQuery(searchTerm);
         // 검색어로 실제 검색 수행
         loadArtists(searchTerm, true);
         // 상태를 사용한 후 제거
@@ -58,6 +61,7 @@ export default function ArtistsPage() {
       }
     } else {
       loadArtists(undefined, true);
+    }
     }
   }, []);
 

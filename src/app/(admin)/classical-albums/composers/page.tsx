@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { apiClient, Composer, ComposerCreate, ComposerUpdate } from "@/lib/api";
@@ -33,6 +33,7 @@ export default function ComposersPage() {
   });
   const [uploading, setUploading] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const hasLoadedRef = useRef(false);
 
 
   const formatLife = (birthYear: number | null, deathYear: number | null): string => {
@@ -45,7 +46,10 @@ export default function ComposersPage() {
   };
 
   useEffect(() => {
-    loadComposers(undefined, true);
+    if (!hasLoadedRef.current) {
+      hasLoadedRef.current = true;
+      loadComposers(undefined, true);
+    }
   }, []);
 
   const loadComposers = async (searchTerm?: string, isInitialLoad = false) => {
